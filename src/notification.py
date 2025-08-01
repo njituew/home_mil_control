@@ -1,0 +1,57 @@
+import json
+from aiogram import Bot
+from sqlalchemy import select, delete
+from db.models import User, TodayControl
+from db.database import AsyncSessionLocal
+from src.utils import get_bot_token
+
+ADMINS_FILE = "admins.json"
+
+async def send_daily_report():
+    # Получаем список админов
+    with open(ADMINS_FILE, "r", encoding="utf-8") as f:
+        admins = [admin["chat_id"] for admin in json.load(f)["admins"]]
+
+    bot = Bot(get_bot_token())
+
+    async with AsyncSessionLocal() as session:
+        # Все пользователи
+        users_result = await session.execute(select(User))
+        users = users_result.scalars().all()
+
+        # Все отметки за сегодня
+        controls_result = await session.execute(select(TodayControl))
+        controls = controls_result.scalars().all()
+        controls_by_id = {c.telegram_id: c for c in controls}
+
+        # Пользователи, прошедшие опрос и не дома
+        not_home = [
+            user.surname
+            for user in users
+            if user.telegram_id in controls_by_id and not controls_by_id[user.telegram_id].is_home
+        ]
+
+        # Пользователи, не прошедшие опрос
+        not_checked = [
+            user.surname
+            for user in users
+            if user.telegram_id not in controls_by_id
+        ]
+
+        # Формируем текст отчёта
+        text = "Ежедневный отчёт:\n"
+        text += "\nНе дома:\n"
+        text += "\n".join(not_home) if not_home else "Все дома или не отмечались"
+        text += "\n\nНе прошли опрос:\n"
+        text += "\n".join(not_checked) if not_checked else "Все отметились"
+
+        # Рассылка администраторам
+        for admin_id in admins:
+            try:
+                await bot.send_message(admin_id, text)
+            except Exception as e:
+                print(f"Ошибка отправки админу {admin_id}: {e}")
+
+        # Очищаем таблицу TodayControl
+        await session.execute(delete(TodayControl))
+        await session.commit()

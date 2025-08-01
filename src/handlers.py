@@ -116,7 +116,7 @@ async def control_location(message: Message, state: FSMContext):
             user.home_latitude, user.home_longitude,
             message.location.latitude, message.location.longitude
         )
-        is_home = dist <= 500
+        is_home = dist <= 250
 
         control = TodayControl(telegram_id=user.telegram_id, is_home=is_home)
         session.add(control)
