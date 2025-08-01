@@ -41,7 +41,7 @@ async def cmd_start(message: Message, state: FSMContext):
 @router.message(RegisterStates.waiting_for_surname)
 async def process_surname(message: Message, state: FSMContext):
     await state.update_data(surname=message.text)
-    await message.answer("Теперь отправьте вашу домашнюю геолокацию (гео-метку телеграма).")
+    await message.answer("Теперь отправьте вашу домашнюю геолокацию (гео-метку телеграма по кнопке 'Транслировать местоположение').")
     await state.set_state(RegisterStates.waiting_for_location)
 
 
@@ -50,6 +50,10 @@ async def process_location(message: Message, state: FSMContext):
     # Проверка, что сообщение не пересланное
     if message.forward_from or message.forward_from_chat:
         await message.answer("Пожалуйста, отправьте новую геолокацию, а не пересланное сообщение.")
+        return
+    # Проверка, что отправлена именно текущая геопозиция
+    if not getattr(message.location, "live_period", None):
+        await message.answer("Используйте кнопку 'Транслировать местоположение'.")
         return
     
     user_data = await state.get_data()
@@ -86,12 +90,21 @@ async def control_location(message: Message, state: FSMContext):
         RegisterStates.waiting_for_location.state
     ]:
         return
+    
+    # Проверка, что сообщение не пересланное
+    if message.forward_from or message.forward_from_chat:
+        await message.answer("Пожалуйста, отправьте новую геолокацию, а не пересланное сообщение.")
+        return
+    # Проверка, что отправлена именно текущая геопозиция
+    if not getattr(message.location, "live_period", None):
+        await message.answer("Используйте кнопку 'Транслировать местоположение'.")
+        return
 
     # Проверка времени по Москве
     moscow_tz = pytz.timezone("Europe/Moscow")
     now = datetime.now(moscow_tz).time()
     if not (time(21, 40) <= now <= time(22, 20)):
-        await message.answer("Отправлять геолокацию можно только с 21:40 до 22:20 по Москве.")
+        await message.answer("Отправлять геолокацию нужно только с 21:40 до 22:20.")
         return
 
     async with AsyncSessionLocal() as session:
