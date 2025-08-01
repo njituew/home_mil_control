@@ -1,7 +1,7 @@
 import asyncio
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
-from src.register import register_handlers
+from src.handlers import register_handlers
 from db.database import init_db
 from src.utils import get_bot_token
 
