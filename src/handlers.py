@@ -6,7 +6,7 @@ from aiogram.filters import Command
 from db.models import User
 from db.database import AsyncSessionLocal
 from sqlalchemy import select
-from datetime import datetime, time, date
+from datetime import datetime, time
 from db.models import TodayControl
 from src.utils import haversine
 import pytz

@@ -7,7 +7,7 @@ from db.database import init_db
 from src.utils import get_bot_token
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
-from src.notification import send_daily_report
+from src.notification import *
 
 
 async def main():
@@ -20,6 +20,7 @@ async def main():
     register_admin_handlers(dp)
     # Настройка планировщика
     scheduler = AsyncIOScheduler(timezone="Europe/Moscow")
+    scheduler.add_job(send_reminder, CronTrigger(hour=21, minute=40))
     scheduler.add_job(send_daily_report, CronTrigger(hour=22, minute=20))
     scheduler.start()
     

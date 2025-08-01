@@ -55,3 +55,20 @@ async def send_daily_report():
         # Очищаем таблицу TodayControl
         await session.execute(delete(TodayControl))
         await session.commit()
+
+async def send_reminder():
+    """
+    Оповещение всем пользователям с просьбой отправить геометку.
+    """
+    bot = Bot(get_bot_token())
+    async with AsyncSessionLocal() as session:
+        users_result = await session.execute(select(User))
+        users = users_result.scalars().all()
+        for user in users:
+            try:
+                await bot.send_message(
+                    user.telegram_id,
+                    "Отправьте свою геолокацию с 21:40 до 22:20."
+                )
+            except Exception as e:
+                print(f"Ошибка отправки пользователю {user.telegram_id}: {e}")
