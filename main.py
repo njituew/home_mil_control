@@ -2,6 +2,7 @@ import asyncio
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
 from src.handlers import register_handlers
+from src.admin import register_admin_handlers
 from db.database import init_db
 from src.utils import get_bot_token
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -16,9 +17,10 @@ async def main():
     
     await init_db()
     register_handlers(dp)
+    register_admin_handlers(dp)
     # Настройка планировщика
     scheduler = AsyncIOScheduler(timezone="Europe/Moscow")
-    scheduler.add_job(send_daily_report, CronTrigger(hour=0, minute=6))
+    scheduler.add_job(send_daily_report, CronTrigger(hour=22, minute=20))
     scheduler.start()
     
     await dp.start_polling(bot)

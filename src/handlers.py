@@ -9,6 +9,7 @@ from sqlalchemy import select
 from datetime import datetime, time, date
 from db.models import TodayControl
 from src.utils import haversine
+import pytz
 
 
 router = Router()
@@ -87,11 +88,11 @@ async def control_location(message: Message, state: FSMContext):
         return
 
     # Проверка времени по Москве
-    # moscow_tz = pytz.timezone("Europe/Moscow")
-    # now = datetime.now(moscow_tz).time()
-    # if not (time(21, 40) <= now <= time(22, 20)):
-    #     await message.answer("Отправлять геолокацию можно только с 21:40 до 22:20 по Москве.")
-    #     return
+    moscow_tz = pytz.timezone("Europe/Moscow")
+    now = datetime.now(moscow_tz).time()
+    if not (time(21, 40) <= now <= time(22, 20)):
+        await message.answer("Отправлять геолокацию можно только с 21:40 до 22:20 по Москве.")
+        return
 
     async with AsyncSessionLocal() as session:
         # Проверяем, есть ли уже отметка пользователя
