@@ -94,6 +94,16 @@ async def control_location(message: Message, state: FSMContext):
     #     return
 
     async with AsyncSessionLocal() as session:
+        # Проверяем, есть ли уже отметка пользователя
+        result = await session.execute(
+            select(TodayControl).where(TodayControl.telegram_id == message.from_user.id)
+        )
+        control = result.scalar_one_or_none()
+        if control:
+            await message.answer("Вы уже отправляли геолокацию сегодня. Повторная отправка невозможна.")
+            return
+
+        # Получаем пользователя для координат дома
         result = await session.execute(
             select(User).where(User.telegram_id == message.from_user.id)
         )
@@ -108,16 +118,8 @@ async def control_location(message: Message, state: FSMContext):
         )
         is_home = dist <= 500
 
-        # Обновляем или создаём запись для пользователя
-        result = await session.execute(
-            select(TodayControl).where(TodayControl.telegram_id == user.telegram_id)
-        )
-        control = result.scalar_one_or_none()
-        if control:
-            control.is_home = is_home
-        else:
-            control = TodayControl(telegram_id=user.telegram_id, is_home=is_home)
-            session.add(control)
+        control = TodayControl(telegram_id=user.telegram_id, is_home=is_home)
+        session.add(control)
         await session.commit()
 
         if is_home:
