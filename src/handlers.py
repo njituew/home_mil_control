@@ -89,12 +89,12 @@ async def control_location(message: Message, state: FSMContext):
         await message.answer("Используйте кнопку 'Транслировать местоположение'.")
         return
 
-    # Проверка времени по Москве
-    # moscow_tz = pytz.timezone("Europe/Moscow")
-    # now = datetime.now(moscow_tz).time()
-    # if not (time(21, 40) <= now <= time(22, 20)):
-    #     await message.answer("Отправлять геолокацию нужно только с 21:40 до 22:20.")
-    #     return
+    # проверка времени
+    moscow_tz = pytz.timezone("Europe/Moscow")
+    now = datetime.now(moscow_tz).time()
+    if not (time(21, 40) <= now <= time(22, 20)):
+        await message.answer("Отправлять геолокацию нужно только с 21:40 до 22:20.")
+        return
 
     if not await is_user_registered(message.from_user.id):
         await message.answer("Сначала зарегистрируйтесь с помощью /start.")
