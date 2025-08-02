@@ -23,14 +23,14 @@ async def main():
     scheduler = AsyncIOScheduler(timezone=pytz.timezone("Europe/Moscow"))
     scheduler.add_job(
         send_reminder,
-        CronTrigger(hour=0, minute=29),
+        CronTrigger(hour=18, minute=40),
         args=[bot],
         id="send_reminder",
         replace_existing=True
     )
     scheduler.add_job(
         send_daily_report,
-        CronTrigger(hour=0, minute=48),
+        CronTrigger(hour=19, minute=12),
         args=[bot],
         id="send_daily_report",
         replace_existing=True

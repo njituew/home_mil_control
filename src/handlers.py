@@ -39,21 +39,12 @@ async def cmd_start(message: Message, state: FSMContext):
 @router.message(RegisterStates.waiting_for_surname)
 async def process_surname(message: Message, state: FSMContext):
     await state.update_data(surname=message.text)
-    await message.answer("Теперь отправьте вашу домашнюю геолокацию (гео-метку телеграма по кнопке 'Транслировать местоположение').")
+    await message.answer("Теперь отправьте вашу домашнюю геолокацию (гео-метку телеграма по кнопке 'Транслировать местоположение' или выберите точку на карте).")
     await state.set_state(RegisterStates.waiting_for_location)
 
 
 @router.message(RegisterStates.waiting_for_location, F.location)
-async def process_location(message: Message, state: FSMContext):
-    # Проверка, что сообщение не пересланное
-    if message.forward_from or message.forward_from_chat:
-        await message.answer("Отправьте новую геолокацию, а не пересланное сообщение.")
-        return
-    # Проверка, что отправлена именно текущая геопозиция
-    if not getattr(message.location, "live_period", None):
-        await message.answer("Используйте кнопку 'Транслировать местоположение'.")
-        return
-    
+async def process_location(message: Message, state: FSMContext):    
     user_data = await state.get_data()
     surname = user_data["surname"]
     latitude = message.location.latitude
@@ -80,11 +71,11 @@ async def control_location(message: Message, state: FSMContext):
     ]:
         return
     
-    # Проверка, что сообщение не пересланное
+    # проверка, что сообщение не пересланное
     if message.forward_from or message.forward_from_chat:
         await message.answer("Отправьте новую геолокацию, а не пересланное сообщение.")
         return
-    # Проверка, что отправлена именно текущая геопозиция
+    # проверка, что отправлена именно текущая геопозиция
     if not getattr(message.location, "live_period", None):
         await message.answer("Используйте кнопку 'Транслировать местоположение'.")
         return
@@ -92,8 +83,8 @@ async def control_location(message: Message, state: FSMContext):
     # проверка времени
     moscow_tz = pytz.timezone("Europe/Moscow")
     now = datetime.now(moscow_tz).time()
-    if not (time(21, 40) <= now <= time(22, 20)):
-        await message.answer("Отправлять геолокацию нужно только с 21:40 до 22:20.")
+    if not (time(21, 40) <= now <= time(22, 10)):
+        await message.answer("Отправлять геолокацию нужно только с 21:40 до 22:10.")
         return
 
     if not await is_user_registered(message.from_user.id):

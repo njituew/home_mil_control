@@ -1,8 +1,9 @@
 import json
 from aiogram import Bot
-from sqlalchemy import select, delete
+from sqlalchemy import select
 from db.models import User, TodayControl
 from db.database import AsyncSessionLocal
+from db.utils import clear_today_control
 
 
 ADMINS_FILE = "admins.json"
@@ -65,6 +66,5 @@ async def send_daily_report(bot: Bot):
             except Exception as e:
                 print(f"Ошибка отправки админу {admin_id}: {e}")
 
-        # Очищаем таблицу TodayControl
-        await session.execute(delete(TodayControl))
-        await session.commit()
+        # очищаем таблицу TodayControl
+        await clear_today_control()
