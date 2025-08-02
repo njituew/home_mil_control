@@ -1,17 +1,22 @@
-from aiogram import Router, F
+from aiogram import Router
 from aiogram.types import Message
 from aiogram.filters import Command
-from db.models import User
-from db.database import AsyncSessionLocal
-from sqlalchemy import select
 import json
+from db.utils import (
+    get_all_users,
+    delete_user_by_telegram_id,
+    clear_today_control,
+)
+
 
 router = Router()
+
 
 def get_admin_ids():
     with open("admins.json", "r", encoding="utf-8") as f:
         data = json.load(f)
         return [admin["chat_id"] for admin in data["admins"]]
+
 
 @router.message(Command("users"))
 async def list_users(message: Message):
@@ -20,21 +25,20 @@ async def list_users(message: Message):
         await message.answer("У вас нет прав для этой команды.")
         return
 
-    async with AsyncSessionLocal() as session:
-        result = await session.execute(select(User))
-        users = result.scalars().all()
-        if not users:
-            await message.answer("Нет зарегистрированных пользователей.")
-            return
+    users = await get_all_users()
+    if not users:
+        await message.answer("Нет зарегистрированных пользователей.")
+        return
 
-        text = "Зарегистрированные пользователи:\n"
-        for user in users:
-            text += (
-                f"Фамилия: {user.surname}, "
-                f"Telegram ID: {user.telegram_id}, "
-                f"Домашний адрес: {user.home_latitude}, {user.home_longitude}\n"
-            )
-        await message.answer(text)
+    text = "Зарегистрированные пользователи:\n"
+    for user in users:
+        text += (
+            f"Фамилия: {user.surname}, "
+            f"Telegram ID: {user.telegram_id}, "
+            f"Домашний адрес: {user.home_latitude}, {user.home_longitude}\n"
+        )
+    await message.answer(text)
+
 
 @router.message(Command("delete"))
 async def delete_user(message: Message):
@@ -49,17 +53,20 @@ async def delete_user(message: Message):
         return
 
     telegram_id = int(args[1])
+    await delete_user_by_telegram_id(telegram_id)
+    await message.answer(f"Пользователь с Telegram ID {telegram_id} удалён (если был в базе).")
 
-    async with AsyncSessionLocal() as session:
-        result = await session.execute(select(User).where(User.telegram_id == telegram_id))
-        user = result.scalar_one_or_none()
-        if not user:
-            await message.answer("Пользователь с таким Telegram ID не найден.")
-            return
 
-        await session.delete(user)
-        await session.commit()
-        await message.answer(f"Пользователь с Telegram ID {telegram_id} удалён.")
+@router.message(Command("clear"))
+async def clear_control(message: Message):
+    admin_ids = get_admin_ids()
+    if message.from_user.id not in admin_ids:
+        await message.answer("У вас нет прав для этой команды.")
+        return
+
+    await clear_today_control()
+    await message.answer("Таблица TodayControl успешно очищена.")
+
 
 def register_admin_handlers(dp):
     dp.include_router(router)

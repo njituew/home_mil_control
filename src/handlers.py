@@ -3,13 +3,16 @@ from aiogram.types import Message
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.filters import Command
-from db.models import User
-from db.database import AsyncSessionLocal
-from sqlalchemy import select
 from datetime import datetime, time
-from db.models import TodayControl
-from src.utils import haversine
 import pytz
+from src.utils import haversine
+from db.utils import (
+    is_user_registered,
+    get_user_by_telegram_id,
+    add_user,
+    get_today_control_by_telegram_id,
+    add_today_control,
+)
 
 
 router = Router()
@@ -24,15 +27,10 @@ class RegisterStates(StatesGroup):
 @router.message(Command("start"))
 async def cmd_start(message: Message, state: FSMContext):
     # проверка регистрации пользователя
-    async with AsyncSessionLocal() as session:
-        result = await session.execute(
-            select(User).where(User.telegram_id == message.from_user.id)
-        )
-        user = result.scalar_one_or_none()
-        if user:
-            await message.answer("Вы уже зарегистрированы!")
-            await state.clear()
-            return
+    if await is_user_registered(message.from_user.id):
+        await message.answer("Вы уже зарегистрированы!")
+        await state.clear()
+        return
     # начало регистрации
     await message.answer("Введите вашу фамилию.")
     await state.set_state(RegisterStates.waiting_for_surname)
@@ -62,16 +60,7 @@ async def process_location(message: Message, state: FSMContext):
     longitude = message.location.longitude
     
     # сохранение пользователя в базе данных
-    async with AsyncSessionLocal() as session:
-        user = User(
-            telegram_id=message.from_user.id,
-            surname=surname,
-            home_latitude=latitude,
-            home_longitude=longitude
-        )
-        session.add(user)
-        await session.commit()
-    
+    await add_user(message.from_user.id, surname, latitude, longitude)
     await message.answer("Регистрация завершена.")
     await state.clear()
 
@@ -101,45 +90,34 @@ async def control_location(message: Message, state: FSMContext):
         return
 
     # Проверка времени по Москве
-    moscow_tz = pytz.timezone("Europe/Moscow")
-    now = datetime.now(moscow_tz).time()
-    if not (time(21, 40) <= now <= time(22, 20)):
-        await message.answer("Отправлять геолокацию нужно только с 21:40 до 22:20.")
+    # moscow_tz = pytz.timezone("Europe/Moscow")
+    # now = datetime.now(moscow_tz).time()
+    # if not (time(21, 40) <= now <= time(22, 20)):
+    #     await message.answer("Отправлять геолокацию нужно только с 21:40 до 22:20.")
+    #     return
+
+    if not await is_user_registered(message.from_user.id):
+        await message.answer("Сначала зарегистрируйтесь с помощью /start.")
+        return
+    
+    # проверяем, есть ли уже отметка пользователя
+    if await get_today_control_by_telegram_id(message.from_user.id):
+        await message.answer("Вы уже отправляли геолокацию сегодня. Повторная отправка невозможна.")
         return
 
-    async with AsyncSessionLocal() as session:
-        # Проверяем, есть ли уже отметка пользователя
-        result = await session.execute(
-            select(TodayControl).where(TodayControl.telegram_id == message.from_user.id)
-        )
-        control = result.scalar_one_or_none()
-        if control:
-            await message.answer("Вы уже отправляли геолокацию сегодня. Повторная отправка невозможна.")
-            return
-
-        # Получаем пользователя для координат дома
-        result = await session.execute(
-            select(User).where(User.telegram_id == message.from_user.id)
-        )
-        user = result.scalar_one_or_none()
-        if not user:
-            await message.answer("Сначала зарегистрируйтесь с помощью /start.")
-            return
-
-        dist = haversine(
-            user.home_latitude, user.home_longitude,
-            message.location.latitude, message.location.longitude
-        )
-        is_home = dist <= 250
-
-        control = TodayControl(telegram_id=user.telegram_id, is_home=is_home)
-        session.add(control)
-        await session.commit()
-
-        if is_home:
-            await message.answer("Вы находитесь дома. Отметка сохранена.")
-        else:
-            await message.answer("Вы находитесь не дома. Отметка сохранена.")
+    user = await get_user_by_telegram_id(message.from_user.id)
+    
+    dist = haversine(
+        user.home_latitude, user.home_longitude,
+        message.location.latitude, message.location.longitude
+    )
+    is_home = dist <= 250
+    await add_today_control(user.telegram_id, is_home)
+    
+    if is_home:
+        await message.answer("Вы находитесь дома. Отметка сохранена.")
+    else:
+        await message.answer("Вы находитесь не дома. Отметка сохранена.")
 
 
 def register_handlers(dp):

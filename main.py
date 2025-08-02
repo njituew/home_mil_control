@@ -7,7 +7,8 @@ from db.database import init_db
 from src.utils import get_bot_token
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
-from src.notification import *
+from src.notification import send_reminder, send_daily_report
+import pytz
 
 
 async def main():
@@ -18,13 +19,29 @@ async def main():
     await init_db()
     register_handlers(dp)
     register_admin_handlers(dp)
-    # Настройка планировщика
-    scheduler = AsyncIOScheduler(timezone="Europe/Moscow")
-    scheduler.add_job(send_reminder, CronTrigger(hour=18, minute=40))
-    scheduler.add_job(send_daily_report, CronTrigger(hour=19, minute=20))
+
+    scheduler = AsyncIOScheduler(timezone=pytz.timezone("Europe/Moscow"))
+    scheduler.add_job(
+        send_reminder,
+        CronTrigger(hour=0, minute=29),
+        args=[bot],
+        id="send_reminder",
+        replace_existing=True
+    )
+    scheduler.add_job(
+        send_daily_report,
+        CronTrigger(hour=0, minute=48),
+        args=[bot],
+        id="send_daily_report",
+        replace_existing=True
+    )
     scheduler.start()
     
-    await dp.start_polling(bot)
+    try:
+        await dp.start_polling(bot)
+    finally:
+        scheduler.shutdown()
+
 
 if __name__ == "__main__":
     asyncio.run(main())
