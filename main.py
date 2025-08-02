@@ -20,8 +20,8 @@ async def main():
     register_admin_handlers(dp)
     # Настройка планировщика
     scheduler = AsyncIOScheduler(timezone="Europe/Moscow")
-    scheduler.add_job(send_reminder, CronTrigger(hour=21, minute=40))
-    scheduler.add_job(send_daily_report, CronTrigger(hour=22, minute=20))
+    scheduler.add_job(send_reminder, CronTrigger(hour=18, minute=40))
+    scheduler.add_job(send_daily_report, CronTrigger(hour=19, minute=20))
     scheduler.start()
     
     await dp.start_polling(bot)

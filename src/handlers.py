@@ -49,7 +49,7 @@ async def process_surname(message: Message, state: FSMContext):
 async def process_location(message: Message, state: FSMContext):
     # Проверка, что сообщение не пересланное
     if message.forward_from or message.forward_from_chat:
-        await message.answer("Пожалуйста, отправьте новую геолокацию, а не пересланное сообщение.")
+        await message.answer("Отправьте новую геолокацию, а не пересланное сообщение.")
         return
     # Проверка, что отправлена именно текущая геопозиция
     if not getattr(message.location, "live_period", None):
@@ -72,13 +72,13 @@ async def process_location(message: Message, state: FSMContext):
         session.add(user)
         await session.commit()
     
-    await message.answer("Регистрация завершена. Ваши данные сохранены.")
+    await message.answer("Регистрация завершена.")
     await state.clear()
 
 
 @router.message(RegisterStates.waiting_for_location)
 async def invalid_location(message: Message):
-    await message.answer("Пожалуйста, отправьте геолокацию.")
+    await message.answer("Отправьте геолокацию.")
 
 
 @router.message(F.location)
@@ -93,7 +93,7 @@ async def control_location(message: Message, state: FSMContext):
     
     # Проверка, что сообщение не пересланное
     if message.forward_from or message.forward_from_chat:
-        await message.answer("Пожалуйста, отправьте новую геолокацию, а не пересланное сообщение.")
+        await message.answer("Отправьте новую геолокацию, а не пересланное сообщение.")
         return
     # Проверка, что отправлена именно текущая геопозиция
     if not getattr(message.location, "live_period", None):
