@@ -115,14 +115,14 @@ async def control_location(message: Message, state: FSMContext):
     is_home = dist <= 250
     await add_today_control(user.telegram_id, is_home)
     
-    logging.info(f"Пользователь {message.from_user.id} отправил геопозицию: {is_home=}")
-    if not is_home:
+    
+    if is_home:
+        logging.info(f"Пользователь {message.from_user.id} отправил геопозицию и находится дома.")
+        await message.answer("Вы находитесь дома. Отметка сохранена.")
+    else:
         logging.warning(
             f"{user.surname} находится не дома. Расстояние: {dist:.2f} м. {message.location.latitude}, {message.location.longitude}"
         )
-    if is_home:
-        await message.answer("Вы находитесь дома. Отметка сохранена.")
-    else:
         await message.answer("Вы находитесь не дома. Отметка сохранена.")
 
 
