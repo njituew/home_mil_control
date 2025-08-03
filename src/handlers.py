@@ -55,8 +55,7 @@ async def process_location(message: Message, state: FSMContext):
     await add_user(message.from_user.id, surname, latitude, longitude)
     await message.answer("Регистрация завершена.")
     logging.info(
-        f"Зарегистрирован новый пользователь:",
-        f"{message.from_user.id}, {surname}, {latitude}, {longitude}"
+        f"Зарегистрирован новый пользователь: {message.from_user.id}, {surname}, {latitude}, {longitude}"
     )
     await state.clear()
 
