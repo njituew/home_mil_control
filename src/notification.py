@@ -4,12 +4,14 @@ from sqlalchemy import select
 from db.models import User, TodayControl
 from db.database import AsyncSessionLocal
 from db.utils import clear_today_control
+import logging
 
 
 ADMINS_FILE = "admins.json"
 
 
 async def send_reminder(bot: Bot):
+    logging.info("Рассылка напоминаний пользователям")
     async with AsyncSessionLocal() as session:
         users_result = await session.execute(select(User))
         users = users_result.scalars().all()
@@ -24,6 +26,7 @@ async def send_reminder(bot: Bot):
 
 
 async def send_daily_report(bot: Bot):
+    logging.info("Рассылка ежедневного отчёта администраторам")
     # Получаем список админов
     with open(ADMINS_FILE, "r", encoding="utf-8") as f:
         admins = [admin["chat_id"] for admin in json.load(f)["admins"]]
@@ -52,14 +55,13 @@ async def send_daily_report(bot: Bot):
             if user.telegram_id not in controls_by_id
         ]
 
-        # Формируем текст отчёта
         text = "Ежедневный отчёт:\n"
         text += "\nНе дома:\n"
         text += "\n".join(not_home) if not_home else "Все дома или не отмечались"
         text += "\n\nНе прошли опрос:\n"
         text += "\n".join(not_checked) if not_checked else "Все отметились"
 
-        # Рассылка администраторам
+        # рассылка администраторам
         for admin_id in admins:
             try:
                 await bot.send_message(admin_id, text)

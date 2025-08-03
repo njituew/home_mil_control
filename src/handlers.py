@@ -13,6 +13,7 @@ from db.utils import (
     get_today_control_by_telegram_id,
     add_today_control,
 )
+import logging
 
 
 router = Router()
@@ -53,6 +54,10 @@ async def process_location(message: Message, state: FSMContext):
     # сохранение пользователя в базе данных
     await add_user(message.from_user.id, surname, latitude, longitude)
     await message.answer("Регистрация завершена.")
+    logging.info(
+        f"Зарегистрирован новый пользователь:",
+        f"{message.from_user.id}, {surname}, {latitude}, {longitude}"
+    )
     await state.clear()
 
 
@@ -85,6 +90,9 @@ async def control_location(message: Message, state: FSMContext):
     now = datetime.now(moscow_tz).time()
     if not (time(21, 40) <= now <= time(22, 10)):
         await message.answer("Отправлять геолокацию нужно только с 21:40 до 22:10.")
+        logging.warning(
+            f"Пользователь {message.from_user.id} попытался отправить геопозицию вне времени."
+        )
         return
 
     if not await is_user_registered(message.from_user.id):
@@ -94,6 +102,9 @@ async def control_location(message: Message, state: FSMContext):
     # проверяем, есть ли уже отметка пользователя
     if await get_today_control_by_telegram_id(message.from_user.id):
         await message.answer("Вы уже отправляли геолокацию сегодня. Повторная отправка невозможна.")
+        logging.warning(
+            f"Пользователь {message.from_user.id} попытался отправить геолокацию повторно."
+        )
         return
 
     user = await get_user_by_telegram_id(message.from_user.id)
@@ -105,6 +116,7 @@ async def control_location(message: Message, state: FSMContext):
     is_home = dist <= 250
     await add_today_control(user.telegram_id, is_home)
     
+    logging.info(f"Пользователь {message.from_user.id} отправил геопозицию: {is_home=}")
     if is_home:
         await message.answer("Вы находитесь дома. Отметка сохранена.")
     else:

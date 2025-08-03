@@ -9,9 +9,21 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from src.notification import send_reminder, send_daily_report
 import pytz
+import logging
+
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    handlers=[
+        logging.StreamHandler(),
+        logging.FileHandler("bot.log", encoding="utf-8")
+    ]
+)
 
 
 async def main():
+    logging.info("Бот запускается...")
     bot_token = get_bot_token()
     bot = Bot(bot_token)
     dp = Dispatcher(storage=MemoryStorage())
@@ -41,6 +53,7 @@ async def main():
         await dp.start_polling(bot)
     finally:
         scheduler.shutdown()
+        logging.info("Бот остановлен")
 
 
 if __name__ == "__main__":
