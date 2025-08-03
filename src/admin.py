@@ -124,7 +124,7 @@ async def ping_all(message: Message):
         except Exception as e:
             logging.error(f"Ошибка отправки сообщения пользователю {user.telegram_id}: {e}")
 
-    logging.info(f"Админ {message.from_user.id} отправил массовое сообщение {count} пользователям.")
+    logging.info(f"Админ {message.from_user.id} отправил массовое сообщение '{text}' {count} пользователям.")
     await message.answer(f"Сообщение отправлено {count} пользователям.")
 
 
