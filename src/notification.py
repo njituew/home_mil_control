@@ -19,10 +19,10 @@ async def send_reminder(bot: Bot):
             try:
                 await bot.send_message(
                     user.telegram_id,
-                    "Отправьте свою геолокацию с 21:40 до 22:20."
+                    "🚨 Отправьте геолокацию с 21:40 до 22:10."
                 )
             except Exception as e:
-                print(f"Ошибка отправки пользователю {user.telegram_id}: {e}")
+                logging.error(f"Ошибка отправки пользователю {user.telegram_id}: {e}")
 
 
 async def send_daily_report(bot: Bot):
