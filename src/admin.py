@@ -65,6 +65,11 @@ async def delete_user(message: Message):
     await message.answer(f"Пользователь с Telegram ID {telegram_id} удалён (если был в базе).")
 
 
+@router.message(Command("ping"))
+async def ping(message: Message):
+    await message.answer("понг")
+
+
 @router.message(Command("clear"))
 async def clear_control(message: Message):
     admin_ids = get_admin_ids()
