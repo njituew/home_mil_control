@@ -104,5 +104,29 @@ async def show_control_report(message: Message):
     await message.answer(text)
 
 
+@router.message(Command("ping_all"))
+async def ping_all(message: Message):
+    if not await is_admin(message):
+        return
+
+    args = message.text.split(maxsplit=1)
+    if len(args) < 2 or not args[1].strip():
+        await message.answer("Используйте команду в формате: /ping_all {текст}")
+        return
+
+    text = args[1].strip()
+    users = await get_all_users()
+    count = 0
+    for user in users:
+        try:
+            await message.bot.send_message(user.telegram_id, text)
+            count += 1
+        except Exception as e:
+            logging.error(f"Ошибка отправки сообщения пользователю {user.telegram_id}: {e}")
+
+    logging.info(f"Админ {message.from_user.id} отправил массовое сообщение {count} пользователям.")
+    await message.answer(f"Сообщение отправлено {count} пользователям.")
+
+
 def register_admin_handlers(dp):
     dp.include_router(router)
