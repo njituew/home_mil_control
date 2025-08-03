@@ -1,13 +1,13 @@
 from aiogram import Router
 from aiogram.types import Message
 from aiogram.filters import Command
-import json
 from sqlalchemy import select
 from db.utils import (
     get_all_users,
     delete_user_by_telegram_id,
     clear_today_control,
 )
+from src.utils import is_admin
 from db.models import User, TodayControl
 from db.database import AsyncSessionLocal
 import logging
@@ -16,18 +16,9 @@ import logging
 router = Router()
 
 
-def get_admin_ids():
-    with open("admins.json", "r", encoding="utf-8") as f:
-        data = json.load(f)
-        return [admin["chat_id"] for admin in data["admins"]]
-
-
 @router.message(Command("users"))
 async def list_users(message: Message):
-    admin_ids = get_admin_ids()
-    if message.from_user.id not in admin_ids:
-        await message.answer("У вас нет прав для этой команды.")
-        logging.warning(f"Unauthorized access attempt by user {message.from_user.id}")
+    if not await is_admin(message):
         return
 
     users = await get_all_users()
@@ -48,10 +39,7 @@ async def list_users(message: Message):
 
 @router.message(Command("delete"))
 async def delete_user(message: Message):
-    admin_ids = get_admin_ids()
-    if message.from_user.id not in admin_ids:
-        await message.answer("У вас нет прав для этой команды.")
-        logging.warning(f"Unauthorized access attempt by user {message.from_user.id}")
+    if not await is_admin(message):
         return
 
     args = message.text.split()
@@ -65,17 +53,9 @@ async def delete_user(message: Message):
     await message.answer(f"Пользователь с Telegram ID {telegram_id} удалён (если был в базе).")
 
 
-@router.message(Command("ping"))
-async def ping(message: Message):
-    await message.answer("понг")
-
-
 @router.message(Command("clear"))
 async def clear_control(message: Message):
-    admin_ids = get_admin_ids()
-    if message.from_user.id not in admin_ids:
-        await message.answer("У вас нет прав для этой команды.")
-        logging.warning(f"Unauthorized access attempt by user {message.from_user.id}")
+    if not await is_admin(message):
         return
 
     await clear_today_control()
@@ -85,10 +65,7 @@ async def clear_control(message: Message):
 
 @router.message(Command("control"))
 async def show_control_report(message: Message):
-    admin_ids = get_admin_ids()
-    if message.from_user.id not in admin_ids:
-        await message.answer("У вас нет прав для этой команды.")
-        logging.warning(f"Unauthorized access attempt by user {message.from_user.id}")
+    if not await is_admin(message):
         return
 
     async with AsyncSessionLocal() as session:

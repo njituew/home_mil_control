@@ -1,6 +1,9 @@
+from aiogram.types import Message
 from dotenv import load_dotenv
 import os
 from math import radians, cos, sin, asin, sqrt
+import json
+import logging
 
 
 def haversine(lat1, lon1, lat2, lon2):
@@ -28,3 +31,17 @@ def get_database_dsn():
     if not database_dsn:
         raise ValueError("DATABASE_DSN is not set in the environment variables.")
     return database_dsn
+
+def get_admin_ids():
+    with open("admins.json", "r", encoding="utf-8") as f:
+        data = json.load(f)
+        return [admin["chat_id"] for admin in data["admins"]]
+
+async def is_admin(message: Message):
+    admin_ids = get_admin_ids()
+    user_id = message.from_user.id
+    if user_id not in admin_ids:
+        await message.answer("У вас нет прав для этой команды.")
+        logging.warning(f"Unauthorized access attempt by user {user_id}")
+        return False
+    return True

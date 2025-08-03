@@ -122,5 +122,10 @@ async def control_location(message: Message, state: FSMContext):
         await message.answer("Вы находитесь не дома. Отметка сохранена.")
 
 
+@router.message(Command("ping"))
+async def ping(message: Message):
+    await message.answer("понг")
+
+
 def register_handlers(dp):
     dp.include_router(router)
