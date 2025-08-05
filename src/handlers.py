@@ -105,11 +105,11 @@ async def control_location(message: Message):
     await add_today_control(user.telegram_id, is_home)
     
     if is_home:
-        logging.info(f"Пользователь {message.from_user.id} отправил геопозицию и находится дома.")
+        logging.info(f"Пользователь {user.surname} ({message.from_user.id}) отправил геопозицию и находится дома.")
         await message.answer("Вы находитесь дома. Отметка сохранена.")
     else:
         logging.info(
-            f"{user.surname} находится не дома. Расстояние: {dist:.2f} м. {message.location.latitude}, {message.location.longitude}"
+            f"{user.surname} ({message.from_user.id}) находится не дома. Расстояние: {dist:.2f} м. {message.location.latitude}, {message.location.longitude}"
         )
         await add_not_home_distance(user.telegram_id, dist)
         await message.answer("Вы находитесь не дома. Отметка сохранена.")
