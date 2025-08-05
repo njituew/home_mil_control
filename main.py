@@ -37,29 +37,25 @@ async def main():
     register_admin_handlers(dp)
 
     scheduler = AsyncIOScheduler(timezone=pytz.timezone("Europe/Moscow"))
-    minutes = 1
     scheduler.add_job(
         send_reminder,
-        # CronTrigger(hour=18, minute=40),
-        CronTrigger(hour=20, minute=minutes),
+        CronTrigger(hour=18, minute=40),
         args=[bot],
         id="send_reminder",
         replace_existing=True
     )
     scheduler.add_job(
-        send_daily_report,
-        # CronTrigger(hour=19, minute=12),
-        CronTrigger(hour=20, minute=minutes),
+        send_last_chance,
+        CronTrigger(hour=19, minute=5),
         args=[bot],
-        id="send_daily_report",
+        id="send_last_chance",
         replace_existing=True
     )
     scheduler.add_job(
-        send_last_chance,
-        # CronTrigger(hour=19, minute=12),
-        CronTrigger(hour=20, minute=minutes),
+        send_daily_report,
+        CronTrigger(hour=19, minute=12),
         args=[bot],
-        id="send_last_chance",
+        id="send_daily_report",
         replace_existing=True
     )
     scheduler.start()
