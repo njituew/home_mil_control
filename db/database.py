@@ -1,7 +1,7 @@
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.ext.declarative import declarative_base
-from src.utils import get_database_dsn
+from src.config import get_database_dsn
 
 # Настройка асинхронной базы данных SQLite
 database_dsn = get_database_dsn()

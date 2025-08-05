@@ -1,15 +1,12 @@
 from aiogram import Router
 from aiogram.types import Message
 from aiogram.filters import Command
-from sqlalchemy import select
 from db.utils import (
     get_all_users,
     delete_user_by_telegram_id,
     clear_today_control,
 )
-from src.utils import is_admin
-from db.models import User, TodayControl
-from db.database import AsyncSessionLocal
+from src.utils import is_admin, generate_report
 import logging
 
 
@@ -67,41 +64,9 @@ async def clear_control(message: Message):
 async def show_control_report(message: Message):
     if not await is_admin(message):
         return
-
-    async with AsyncSessionLocal() as session:
-        # Все пользователи
-        users_result = await session.execute(select(User))
-        users = users_result.scalars().all()
-
-        # Все отметки за сегодня
-        controls_result = await session.execute(select(TodayControl))
-        controls = controls_result.scalars().all()
-        controls_by_id = {c.telegram_id: c for c in controls}
-
-        # Пользователи, прошедшие опрос и не дома
-        not_home = [
-            user.surname
-            for user in users
-            if user.telegram_id in controls_by_id and not controls_by_id[user.telegram_id].is_home
-        ]
-
-        # Пользователи, не прошедшие опрос
-        not_checked = [
-            user.surname
-            for user in users
-            if user.telegram_id not in controls_by_id
-        ]
-
-        # Формируем текст отчёта
-        text = "Отчёт:\n"
-        text += "\nНе дома:\n"
-        text += "\n".join(not_home) if not_home else "Все дома или не отмечались"
-        text += "\n\nНе прошли опрос:\n"
-        text += "\n".join(not_checked) if not_checked else "Все отметились"
-
+    report = await generate_report()
     logging.info(f"Админ {message.from_user.id} запросил отчёт по TodayControl.")
-    
-    await message.answer(text)
+    await message.answer(report)
 
 
 @router.message(Command("ping_all"))

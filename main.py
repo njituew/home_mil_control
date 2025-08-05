@@ -4,10 +4,14 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from src.handlers import register_handlers
 from src.admin import register_admin_handlers
 from db.database import init_db
-from src.utils import get_bot_token
+from src.config import get_bot_token
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
-from src.notification import send_reminder, send_daily_report
+from src.notification import (
+    send_reminder,
+    send_daily_report,
+    send_last_chance,
+)
 import pytz
 import logging
 
@@ -33,18 +37,29 @@ async def main():
     register_admin_handlers(dp)
 
     scheduler = AsyncIOScheduler(timezone=pytz.timezone("Europe/Moscow"))
+    minutes = 1
     scheduler.add_job(
         send_reminder,
-        CronTrigger(hour=18, minute=40),
+        # CronTrigger(hour=18, minute=40),
+        CronTrigger(hour=20, minute=minutes),
         args=[bot],
         id="send_reminder",
         replace_existing=True
     )
     scheduler.add_job(
         send_daily_report,
-        CronTrigger(hour=19, minute=12),
+        # CronTrigger(hour=19, minute=12),
+        CronTrigger(hour=20, minute=minutes),
         args=[bot],
         id="send_daily_report",
+        replace_existing=True
+    )
+    scheduler.add_job(
+        send_last_chance,
+        # CronTrigger(hour=19, minute=12),
+        CronTrigger(hour=20, minute=minutes),
+        args=[bot],
+        id="send_last_chance",
         replace_existing=True
     )
     scheduler.start()

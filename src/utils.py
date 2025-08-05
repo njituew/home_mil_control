@@ -1,9 +1,11 @@
 from aiogram.types import Message
-from dotenv import load_dotenv
-import os
 from math import radians, cos, sin, asin, sqrt
 import json
 import logging
+from db.database import AsyncSessionLocal
+from sqlalchemy import select
+from db.utils import get_all_users
+from db.models import TodayControl
 
 
 def haversine(lat1, lon1, lat2, lon2):
@@ -18,30 +20,47 @@ def haversine(lat1, lon1, lat2, lon2):
     c = 2 * asin(sqrt(a))
     return R * c
 
-def get_bot_token():
-    load_dotenv()
-    bot_token = os.getenv("BOT_TOKEN")
-    if not bot_token:
-        raise ValueError("BOT_TOKEN is not set in the environment variables.")
-    return bot_token
 
-def get_database_dsn():
-    load_dotenv()
-    database_dsn = os.getenv("DATABASE_DSN")
-    if not database_dsn:
-        raise ValueError("DATABASE_DSN is not set in the environment variables.")
-    return database_dsn
-
-def get_admin_ids():
+async def get_admin_ids():
     with open("admins.json", "r", encoding="utf-8") as f:
         data = json.load(f)
         return [admin["chat_id"] for admin in data["admins"]]
 
+
 async def is_admin(message: Message):
-    admin_ids = get_admin_ids()
+    admin_ids = await get_admin_ids()
     user_id = message.from_user.id
     if user_id not in admin_ids:
         await message.answer("У вас нет прав для этой команды.")
         logging.warning(f"Unauthorized access attempt by user {user_id}")
         return False
     return True
+
+
+async def generate_report() -> str:
+    async with AsyncSessionLocal() as session:
+        users = await get_all_users()
+
+        # все отметки за сегодня
+        controls_result = await session.execute(select(TodayControl))
+        controls = controls_result.scalars().all()
+        controls_by_id = {c.telegram_id: c for c in controls}
+
+        not_home = [
+            user.surname
+            for user in users
+            if user.telegram_id in controls_by_id and not controls_by_id[user.telegram_id].is_home
+        ]
+
+        not_checked = [
+            user.surname
+            for user in users
+            if user.telegram_id not in controls_by_id
+        ]
+
+        text = "Отчёт:\n"
+        text += "\nНе дома:\n"
+        text += "\n".join(not_home) if not_home else "Все дома или не отмечались"
+        text += "\n\nНе прошли опрос:\n"
+        text += "\n".join(not_checked) if not_checked else "Все отметились"
+        return text

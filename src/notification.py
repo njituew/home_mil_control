@@ -1,9 +1,9 @@
-import json
 from aiogram import Bot
 from sqlalchemy import select
-from db.models import User, TodayControl
+from db.models import TodayControl
 from db.database import AsyncSessionLocal
-from db.utils import clear_today_control
+from db.utils import clear_today_control, get_all_users
+from src.utils import generate_report, get_admin_ids
 import logging
 
 
@@ -13,8 +13,7 @@ ADMINS_FILE = "admins.json"
 async def send_reminder(bot: Bot):
     logging.info("Рассылка напоминаний пользователям")
     async with AsyncSessionLocal() as session:
-        users_result = await session.execute(select(User))
-        users = users_result.scalars().all()
+        users = await get_all_users()
         for user in users:
             try:
                 await bot.send_message(
@@ -27,46 +26,41 @@ async def send_reminder(bot: Bot):
 
 async def send_daily_report(bot: Bot):
     logging.info("Рассылка ежедневного отчёта администраторам")
-    # Получаем список админов
-    with open(ADMINS_FILE, "r", encoding="utf-8") as f:
-        admins = [admin["chat_id"] for admin in json.load(f)["admins"]]
+    
+    admins = await get_admin_ids()
+    report = await generate_report()
 
+    # рассылка
+    for admin_id in admins:
+        try:
+            await bot.send_message(admin_id, report)
+        except Exception as e:
+            print(f"Ошибка отправки админу {admin_id}: {e}")
+
+    # очищаем таблицу TodayControl
+    await clear_today_control()
+
+
+async def send_last_chance(bot: Bot):
+    logging.info("Отправка последнего предупреждения пользователям")
     async with AsyncSessionLocal() as session:
-        # Все пользователи
-        users_result = await session.execute(select(User))
-        users = users_result.scalars().all()
-
-        # Все отметки за сегодня
+        users = await get_all_users()
+        
         controls_result = await session.execute(select(TodayControl))
         controls = controls_result.scalars().all()
         controls_by_id = {c.telegram_id: c for c in controls}
-
-        # Пользователи, прошедшие опрос и не дома
-        not_home = [
-            user.surname
-            for user in users
-            if user.telegram_id in controls_by_id and not controls_by_id[user.telegram_id].is_home
-        ]
-
-        # Пользователи, не прошедшие опрос
+        
         not_checked = [
-            user.surname
+            user
             for user in users
             if user.telegram_id not in controls_by_id
         ]
-
-        text = "Ежедневный отчёт:\n"
-        text += "\nНе дома:\n"
-        text += "\n".join(not_home) if not_home else "Все дома или не отмечались"
-        text += "\n\nНе прошли опрос:\n"
-        text += "\n".join(not_checked) if not_checked else "Все отметились"
-
-        # рассылка администраторам
-        for admin_id in admins:
+        
+        for user in not_checked:
             try:
-                await bot.send_message(admin_id, text)
+                await bot.send_message(
+                    user.telegram_id,
+                    "🚨 Осталось 5 минут чтобы отправить свою локацию."
+                )
             except Exception as e:
-                print(f"Ошибка отправки админу {admin_id}: {e}")
-
-        # очищаем таблицу TodayControl
-        await clear_today_control()
+                logging.error(f"Ошибка отправки пользователю {user.telegram_id}: {e}")
