@@ -5,10 +5,10 @@ import logging
 from db.database import AsyncSessionLocal
 from sqlalchemy import select
 from db.utils import get_all_users
-from db.models import TodayControl
+from db.models import TodayControl, NotHomeDistance
 
 
-def haversine(lat1, lon1, lat2, lon2):
+async def haversine(lat1, lon1, lat2, lon2):
     """
     Возвращает расстояние между двумя точками (в метрах) по координатам.
     """
@@ -45,9 +45,14 @@ async def generate_report() -> str:
         controls_result = await session.execute(select(TodayControl))
         controls = controls_result.scalars().all()
         controls_by_id = {c.telegram_id: c for c in controls}
+        
+        # все расстояния для пользователей которые не дома
+        distances_result = await session.execute(select(NotHomeDistance))
+        distances = distances_result.scalars().all()
+        distances_by_id = {d.telegram_id: d.distance for d in distances}
 
         not_home = [
-            user.surname
+            f"{user.surname} ({distances_by_id[user.telegram_id]/1000:.2f} км от дома)"
             for user in users
             if user.telegram_id in controls_by_id and not controls_by_id[user.telegram_id].is_home
         ]

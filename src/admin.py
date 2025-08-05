@@ -4,7 +4,7 @@ from aiogram.filters import Command
 from db.utils import (
     get_all_users,
     delete_user_by_telegram_id,
-    clear_today_control,
+    clear_data,
 )
 from src.utils import is_admin, generate_report
 import logging
@@ -55,9 +55,9 @@ async def clear_control(message: Message):
     if not await is_admin(message):
         return
 
-    await clear_today_control()
-    logging.info(f"Админ {message.from_user.id} очистил таблицу TodayControl.")
-    await message.answer("Таблица TodayControl успешно очищена.")
+    await clear_data()
+    logging.info(f"Админ {message.from_user.id} очистил таблицу TodayControl и NotHomeDistance.")
+    await message.answer("Сегодняшние отметки успешно удалены.")
 
 
 @router.message(Command("control"))

@@ -12,6 +12,7 @@ from db.utils import (
     add_user,
     get_today_control_by_telegram_id,
     add_today_control,
+    add_not_home_distance,
 )
 import logging
 
@@ -66,15 +67,7 @@ async def invalid_location(message: Message):
 
 
 @router.message(F.location)
-async def control_location(message: Message, state: FSMContext):
-    # Не реагировать, если пользователь в процессе регистрации
-    current_state = await state.get_state()
-    if current_state in [
-        RegisterStates.waiting_for_surname.state,
-        RegisterStates.waiting_for_location.state
-    ]:
-        return
-    
+async def control_location(message: Message):
     # проверка, что сообщение не пересланное
     if message.forward_from or message.forward_from_chat:
         await message.answer("Отправьте новую геолокацию, а не пересланное сообщение.")
@@ -93,10 +86,6 @@ async def control_location(message: Message, state: FSMContext):
             f"Пользователь {message.from_user.id} попытался отправить геопозицию вне времени."
         )
         return
-
-    if not await is_user_registered(message.from_user.id):
-        await message.answer("Сначала зарегистрируйтесь с помощью /start.")
-        return
     
     # проверяем, есть ли уже отметка пользователя
     if await get_today_control_by_telegram_id(message.from_user.id):
@@ -108,21 +97,21 @@ async def control_location(message: Message, state: FSMContext):
 
     user = await get_user_by_telegram_id(message.from_user.id)
     
-    dist = haversine(
+    dist = await haversine(
         user.home_latitude, user.home_longitude,
         message.location.latitude, message.location.longitude
     )
     is_home = dist <= 250
     await add_today_control(user.telegram_id, is_home)
     
-    
     if is_home:
         logging.info(f"Пользователь {message.from_user.id} отправил геопозицию и находится дома.")
         await message.answer("Вы находитесь дома. Отметка сохранена.")
     else:
-        logging.warning(
+        logging.info(
             f"{user.surname} находится не дома. Расстояние: {dist:.2f} м. {message.location.latitude}, {message.location.longitude}"
         )
+        await add_not_home_distance(user.telegram_id, dist)
         await message.answer("Вы находитесь не дома. Отметка сохранена.")
 
 
