@@ -2,7 +2,12 @@ from aiogram.types import Message
 from math import radians, cos, sin, asin, sqrt
 import json
 import logging
-from db.utils import get_all_users, get_all_controls, get_all_distances
+from db.utils import (
+    get_all_users,
+    get_all_controls,
+    get_all_distances,
+    get_all_questionnaire
+)
 
 
 async def haversine(lat1, lon1, lat2, lon2):
@@ -66,7 +71,7 @@ async def generate_report() -> str:
 async def generate_report_quest() -> str:
     users = await get_all_users()
 
-    questionnaires = await get_all_controls()
+    questionnaires = await get_all_questionnaire()
     questionnaires_by_id = {q.telegram_id: q for q in questionnaires}
 
     will_feed_users = [

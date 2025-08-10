@@ -97,14 +97,6 @@ async def clear_not_home_distance():
 
 
 # Questionnaire
-async def get_questionnaire_by_id(telegram_id: int):
-    async  with AsyncSessionLocal() as session:
-        result = await session.execute(
-            select(Questionnaire).where(Questionnaire.telegram_id == telegram_id)
-        )
-        return result.scalar_one_or_none()
-
-
 async def add_user_questionnaire(telegram_id: int, surname: str, will_feed: bool = False):
     async with AsyncSessionLocal() as session:
         user = Questionnaire(
@@ -114,6 +106,20 @@ async def add_user_questionnaire(telegram_id: int, surname: str, will_feed: bool
         )
         session.add(user)
         await session.commit()
+
+
+async def get_all_questionnaire():
+    async with AsyncSessionLocal() as session:
+        result = await session.execute(select(Questionnaire))
+        return result.scalars().all()
+
+
+async def get_questionnaire_by_id(telegram_id: int):
+    async with AsyncSessionLocal() as session:
+        result = await session.execute(
+            select(Questionnaire).where(Questionnaire.telegram_id == telegram_id)
+        )
+        return result.scalar_one_or_none()
 
 
 async def clear_questionnaire():

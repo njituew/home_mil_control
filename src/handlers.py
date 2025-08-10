@@ -127,7 +127,7 @@ async def questionnaire_response(data: CallbackQuery):
     user = await get_user_by_telegram_id(data.from_user.id)
     
     # проверка на повторную попытку ответа
-    if get_questionnaire_by_id(user.telegram_id):
+    if await get_questionnaire_by_id(user.telegram_id):
         logging.warning(
             f"Пользователь {user.surname} ({user.telegram_id}) попытался ответить на опрос повторно."
         )
