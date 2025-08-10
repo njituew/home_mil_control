@@ -10,14 +10,12 @@ from db.utils import (
     is_user_registered,
     get_user_by_telegram_id,
     add_user,
-    get_today_control_by_telegram_id,
+    get_today_control_by_id,
     add_today_control,
     add_not_home_distance,
     add_user_questionnaire,
+    get_questionnaire_by_id
 )
-from db.database import AsyncSessionLocal
-from db.models import Questionnaire
-from sqlalchemy import select
 import logging
 
 
@@ -92,7 +90,7 @@ async def control_location(message: Message):
         return
     
     # проверка, есть ли уже отметка пользователя
-    if await get_today_control_by_telegram_id(message.from_user.id):
+    if await get_today_control_by_id(message.from_user.id):
         await message.answer("Вы уже отправляли геолокацию сегодня. Повторная отправка невозможна.")
         logging.warning(
             f"Пользователь {message.from_user.id} попытался отправить геолокацию повторно."
@@ -129,16 +127,13 @@ async def questionnaire_response(data: CallbackQuery):
     user = await get_user_by_telegram_id(data.from_user.id)
     
     # проверка на повторную попытку ответа
-    async with AsyncSessionLocal() as session:
-        result = await session.execute(
-            select(Questionnaire).filter_by(telegram_id=user.telegram_id)
+    if get_questionnaire_by_id(user.telegram_id):
+        logging.warning(
+            f"Пользователь {user.surname} ({user.telegram_id}) попытался ответить на опрос повторно."
         )
-        existing_response = result.scalar_one_or_none()
-        
-        if existing_response:
-            await data.message.answer("Вы уже ответили на опрос.")
-            await data.answer()
-            return
+        await data.message.answer("Вы уже ответили на опрос.")
+        await data.answer()
+        return
     
     will_feed = data.data == "questionnaire_feeding_yes"
     await add_user_questionnaire(user.telegram_id, user.surname, will_feed)

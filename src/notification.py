@@ -1,9 +1,6 @@
 from aiogram import Bot
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from sqlalchemy import select
-from db.models import TodayControl
-from db.database import AsyncSessionLocal
-from db.utils import get_all_users
+from db.utils import get_all_users, get_all_controls
 from src.utils import generate_report, get_admin_ids
 import logging
 
@@ -26,27 +23,24 @@ async def send_reminder(bot: Bot):
 
 async def send_last_chance(bot: Bot):
     logging.info("Отправка последнего предупреждения пользователям")
-    async with AsyncSessionLocal() as session:
-        users = await get_all_users()
-        
-        controls_result = await session.execute(select(TodayControl))
-        controls = controls_result.scalars().all()
-        controls_by_id = {c.telegram_id: c for c in controls}
-        
-        not_checked = [
-            user
-            for user in users
-            if user.telegram_id not in controls_by_id
-        ]
-        
-        for user in not_checked:
-            try:
-                await bot.send_message(
-                    user.telegram_id,
-                    "🚨 Осталось 5 минут чтобы отправить свою локацию."
-                )
-            except Exception as e:
-                logging.error(f"Ошибка отправки пользователю {user.telegram_id}: {e}")
+
+    users = await get_all_users()
+    controls = await get_all_controls()
+    
+    not_checked = [
+        user
+        for user in users
+        if user.telegram_id not in {c.telegram_id for c in controls}
+    ]
+    
+    for user in not_checked:
+        try:
+            await bot.send_message(
+                user.telegram_id,
+                "🚨 Осталось 5 минут чтобы отправить свою локацию."
+            )
+        except Exception as e:
+            logging.error(f"Ошибка отправки пользователю {user.telegram_id}: {e}")
 
 
 async def send_daily_report(bot: Bot):

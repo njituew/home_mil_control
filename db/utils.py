@@ -4,6 +4,7 @@ from db.database import AsyncSessionLocal
 import logging
 
 
+# Users
 async def is_user_registered(telegram_id: int) -> bool:
     async with AsyncSessionLocal() as session:
         result = await session.execute(
@@ -38,28 +39,6 @@ async def get_all_users():
         return result.scalars().all()
 
 
-async def get_today_control_by_telegram_id(telegram_id: int):
-    async with AsyncSessionLocal() as session:
-        result = await session.execute(
-            select(TodayControl).where(TodayControl.telegram_id == telegram_id)
-        )
-        return result.scalar_one_or_none()
-
-
-async def add_today_control(telegram_id: int, is_home: bool):
-    async with AsyncSessionLocal() as session:
-        control = TodayControl(telegram_id=telegram_id, is_home=is_home)
-        session.add(control)
-        await session.commit()
-
-
-async def add_not_home_distance(telegram_id: int, distance: float):
-    async with AsyncSessionLocal() as session:
-        distance_record = NotHomeDistance(telegram_id=telegram_id, distance=distance)
-        session.add(distance_record)
-        await session.commit()
-
-
 async def delete_user_by_telegram_id(telegram_id: int):
     async with AsyncSessionLocal() as session:
         result = await session.execute(select(User).where(User.telegram_id == telegram_id))
@@ -69,10 +48,46 @@ async def delete_user_by_telegram_id(telegram_id: int):
             await session.commit()
 
 
+# TodayControl
+async def add_today_control(telegram_id: int, is_home: bool):
+    async with AsyncSessionLocal() as session:
+        control = TodayControl(telegram_id=telegram_id, is_home=is_home)
+        session.add(control)
+        await session.commit()
+
+
+async def get_all_controls():
+    async with AsyncSessionLocal() as session:
+        result = await session.execute(select(TodayControl))
+        return result.scalars().all()
+
+
+async def get_today_control_by_id(telegram_id: int):
+    async with AsyncSessionLocal() as session:
+        result = await session.execute(
+            select(TodayControl).where(TodayControl.telegram_id == telegram_id)
+        )
+        return result.scalar_one_or_none()
+
+
 async def clear_today_control():
     async with AsyncSessionLocal() as session:
         await session.execute(delete(TodayControl))
         await session.commit()
+
+
+# NotHomeDistance
+async def add_not_home_distance(telegram_id: int, distance: float):
+    async with AsyncSessionLocal() as session:
+        distance_record = NotHomeDistance(telegram_id=telegram_id, distance=distance)
+        session.add(distance_record)
+        await session.commit()
+
+
+async def get_all_distances():
+    async with AsyncSessionLocal() as session:
+        result = await session.execute(select(NotHomeDistance))
+        return result.scalars().all()
 
 
 async def clear_not_home_distance():
@@ -81,15 +96,15 @@ async def clear_not_home_distance():
         await session.commit()
 
 
-async def clear_data():
-    async with AsyncSessionLocal() as session:
-        await session.execute(delete(TodayControl))
-        await session.execute(delete(NotHomeDistance))
-        await session.commit()
-        logging.info("All data cleared from TodayControl and NotHomeDistance tables.")
+# Questionnaire
+async def get_questionnaire_by_id(telegram_id: int):
+    async  with AsyncSessionLocal() as session:
+        result = await session.execute(
+            select(Questionnaire).where(Questionnaire.telegram_id == telegram_id)
+        )
+        return result.scalar_one_or_none()
 
 
-# опросы
 async def add_user_questionnaire(telegram_id: int, surname: str, will_feed: bool = False):
     async with AsyncSessionLocal() as session:
         user = Questionnaire(
@@ -106,3 +121,18 @@ async def clear_questionnaire():
         await session.execute(delete(Questionnaire))
         await session.commit()
         logging.info("All data cleared from Questionnaire table.")
+
+
+async def clear_data():
+    """
+    Очищает все данные из таблиц TodayControl и NotHomeDistance в базе данных.
+
+    Эта функция выполняет удаление всех записей из двух таблиц:
+    - TodayControl: данные о текущих контролях пользователей.
+    - NotHomeDistance: данные о расстоянии пользователей от дома при отсутствии отметки "дома".
+    """
+    async with AsyncSessionLocal() as session:
+        await session.execute(delete(TodayControl))
+        await session.execute(delete(NotHomeDistance))
+        await session.commit()
+        logging.info("All data cleared from TodayControl and NotHomeDistance tables.")
