@@ -6,6 +6,7 @@ from src.admin import register_admin_handlers
 from db.database import init_db
 from src.config import get_bot_token
 from src.scheduler import init_scheduler
+from src.utils import set_commands
 import logging
 
 
@@ -29,6 +30,7 @@ async def main():
     register_admin_handlers(dp)
     scheduler = init_scheduler(bot)
     scheduler.start()
+    await set_commands(bot)
     
     try:
         await dp.start_polling(bot)
