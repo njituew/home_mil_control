@@ -9,10 +9,18 @@ from db.utils import (
 )
 from src.notification import send_questionnaire
 from src.utils import is_admin, generate_report, generate_report_quest
+from src.config import set_commands
 import logging
 
 
 router = Router()
+
+
+@router.message(Command("help"))
+async def cmd_help(message: Message):
+    if not await is_admin(message):
+        return
+    await set_commands(message.bot)
 
 
 @router.message(Command("users"))
