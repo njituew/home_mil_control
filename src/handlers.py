@@ -1,5 +1,5 @@
 from aiogram import Router, F
-from aiogram.types import Message
+from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.filters import Command
@@ -13,7 +13,11 @@ from db.utils import (
     get_today_control_by_telegram_id,
     add_today_control,
     add_not_home_distance,
+    add_user_questionnaire,
 )
+from db.database import AsyncSessionLocal
+from db.models import Questionnaire
+from sqlalchemy import select
 import logging
 
 
@@ -87,7 +91,7 @@ async def control_location(message: Message):
         )
         return
     
-    # проверяем, есть ли уже отметка пользователя
+    # проверка, есть ли уже отметка пользователя
     if await get_today_control_by_telegram_id(message.from_user.id):
         await message.answer("Вы уже отправляли геолокацию сегодня. Повторная отправка невозможна.")
         logging.warning(
@@ -118,6 +122,33 @@ async def control_location(message: Message):
 @router.message(Command("ping"))
 async def ping(message: Message):
     await message.answer("понг")
+
+
+@router.callback_query(F.data.startswith("questionnaire_feeding_"))
+async def questionnaire_response(data: CallbackQuery):
+    user = await get_user_by_telegram_id(data.from_user.id)
+    
+    # проверка на повторную попытку ответа
+    async with AsyncSessionLocal() as session:
+        result = await session.execute(
+            select(Questionnaire).filter_by(telegram_id=user.telegram_id)
+        )
+        existing_response = result.scalar_one_or_none()
+        
+        if existing_response:
+            await data.message.answer("Вы уже ответили на опрос.")
+            await data.answer()
+            return
+    
+    will_feed = data.data == "questionnaire_feeding_yes"
+    await add_user_questionnaire(user.telegram_id, user.surname, will_feed)
+    if will_feed:
+        logging.info(f"Пользователь {user.surname} ({user.telegram_id}) ответил на опрос: будет питаться.")
+        await data.message.answer("Вы записаны на питание.")
+    else:
+        logging.info(f"Пользователь {user.surname} ({user.telegram_id}) ответил на опрос: не будет питаться.")
+        await data.message.answer("Вы отказались от питания.")
+    await data.answer()
 
 
 def register_handlers(dp):

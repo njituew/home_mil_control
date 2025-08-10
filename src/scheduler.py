@@ -27,14 +27,14 @@ def init_scheduler(bot):
     )
     scheduler.add_job(
         send_daily_report,
-        CronTrigger(hour=19, minute=12),
+        CronTrigger(hour=19, minute=10),
         args=[bot],
         id="send_daily_report",
         replace_existing=True
     )
     scheduler.add_job(
         clear_data,
-        CronTrigger(hour=19, minute=15),
+        CronTrigger(hour=19, minute=11),
         id="clear_data",
         replace_existing=True
     )

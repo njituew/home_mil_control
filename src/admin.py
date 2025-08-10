@@ -5,8 +5,10 @@ from db.utils import (
     get_all_users,
     delete_user_by_telegram_id,
     clear_data,
+    clear_questionnaire
 )
-from src.utils import is_admin, generate_report
+from src.notification import send_questionnaire
+from src.utils import is_admin, generate_report, generate_report_quest
 import logging
 
 
@@ -54,7 +56,6 @@ async def delete_user(message: Message):
 async def clear_control(message: Message):
     if not await is_admin(message):
         return
-
     await clear_data()
     logging.info(f"Админ {message.from_user.id} очистил таблицу TodayControl и NotHomeDistance.")
     await message.answer("Сегодняшние отметки успешно удалены.")
@@ -91,6 +92,32 @@ async def ping_all(message: Message):
 
     logging.info(f"Админ {message.from_user.id} отправил массовое сообщение '{text}' {count} пользователям.")
     await message.answer(f"Сообщение отправлено {count} пользователям.")
+
+
+@router.message(Command("start_quest"))
+async def start_questionnaire(message: Message):
+    if not await is_admin(message):
+        return
+    await send_questionnaire(message.bot)
+    logging.info(f"Админ {message.from_user.id} запустил опрос по питанию.")
+
+
+@router.message(Command("quest"))
+async def questionnaire(message: Message):
+    if not await is_admin(message):
+        return
+    report = await generate_report_quest()
+    logging.info(f"Админ {message.from_user.id} запросил отчёт по опросу.")
+    await message.answer(report)
+
+
+@router.message(Command("clear_quest"))
+async def clear_quest(message: Message):
+    if not await is_admin(message):
+        return
+    await clear_questionnaire()
+    logging.info(f"Админ {message.from_user.id} очистил таблицу Questionnaire.")
+    await message.answer("Таблица Questionnaire успешно очищена.")
 
 
 def register_admin_handlers(dp):

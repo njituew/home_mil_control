@@ -5,7 +5,6 @@ from sqlalchemy import Boolean
 
 class User(Base):
     __tablename__ = "users"
-    
     id = Column(Integer, primary_key=True, index=True)
     telegram_id = Column(Integer, unique=True, index=True)
     surname = Column(String)
@@ -25,3 +24,11 @@ class NotHomeDistance(Base):
     id = Column(Integer, primary_key=True, index=True)
     telegram_id = Column(Integer, unique=True, index=True)
     distance = Column(Float, nullable=False)
+
+
+class Questionnaire(Base):
+    __tablename__ = "questionnaire"
+    id = Column(Integer, primary_key=True, index=True)
+    telegram_id = Column(Integer, unique=True, index=True)
+    surname = Column(String)
+    will_feed = Column(Boolean, nullable=False)
