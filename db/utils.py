@@ -1,5 +1,5 @@
 from sqlalchemy import select, delete
-from db.models import User, TodayControl, NotHomeDistance, Questionnaire
+from db.models import User, TodayControl, Questionnaire
 from db.database import AsyncSessionLocal
 import logging
 
@@ -49,9 +49,9 @@ async def delete_user_by_telegram_id(telegram_id: int):
 
 
 # TodayControl
-async def add_today_control(telegram_id: int, is_home: bool):
+async def add_today_control(telegram_id: int, distance: float):
     async with AsyncSessionLocal() as session:
-        control = TodayControl(telegram_id=telegram_id, is_home=is_home)
+        control = TodayControl(telegram_id=telegram_id, distance=distance)
         session.add(control)
         await session.commit()
 
@@ -74,26 +74,7 @@ async def clear_today_control():
     async with AsyncSessionLocal() as session:
         await session.execute(delete(TodayControl))
         await session.commit()
-
-
-# NotHomeDistance
-async def add_not_home_distance(telegram_id: int, distance: float):
-    async with AsyncSessionLocal() as session:
-        distance_record = NotHomeDistance(telegram_id=telegram_id, distance=distance)
-        session.add(distance_record)
-        await session.commit()
-
-
-async def get_all_distances():
-    async with AsyncSessionLocal() as session:
-        result = await session.execute(select(NotHomeDistance))
-        return result.scalars().all()
-
-
-async def clear_not_home_distance():
-    async with AsyncSessionLocal() as session:
-        await session.execute(delete(NotHomeDistance))
-        await session.commit()
+        logging.info("Таблица TodayControl очищена.")
 
 
 # Questionnaire
@@ -129,16 +110,16 @@ async def clear_questionnaire():
         logging.info("All data cleared from Questionnaire table.")
 
 
-async def clear_data():
-    """
-    Очищает все данные из таблиц TodayControl и NotHomeDistance в базе данных.
+# async def clear_data():
+#     """
+#     Очищает все данные из таблиц TodayControl и NotHomeDistance в базе данных.
 
-    Эта функция выполняет удаление всех записей из двух таблиц:
-    - TodayControl: данные о текущих контролях пользователей.
-    - NotHomeDistance: данные о расстоянии пользователей от дома при отсутствии отметки "дома".
-    """
-    async with AsyncSessionLocal() as session:
-        await session.execute(delete(TodayControl))
-        await session.execute(delete(NotHomeDistance))
-        await session.commit()
-        logging.info("All data cleared from TodayControl and NotHomeDistance tables.")
+#     Эта функция выполняет удаление всех записей из двух таблиц:
+#     - TodayControl: данные о текущих контролях пользователей.
+#     - NotHomeDistance: данные о расстоянии пользователей от дома при отсутствии отметки "дома".
+#     """
+#     async with AsyncSessionLocal() as session:
+#         await session.execute(delete(TodayControl))
+#         await session.execute(delete(NotHomeDistance))
+#         await session.commit()
+#         logging.info("All data cleared from TodayControl and NotHomeDistance tables.")

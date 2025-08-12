@@ -3,8 +3,9 @@ from aiogram.types import Message
 from aiogram.filters import Command
 from db.utils import (
     get_all_users,
+    get_user_by_telegram_id,
     delete_user_by_telegram_id,
-    clear_data,
+    clear_today_control,
     clear_questionnaire
 )
 from src.notification import send_questionnaire
@@ -32,7 +33,8 @@ async def list_users(message: Message):
             f"Telegram ID: {user.telegram_id}, "
             f"Домашний адрес: {user.home_latitude}, {user.home_longitude}\n"
         )
-    logging.info(f"Админ {message.from_user.id} запросил список пользователей.")
+    user = await get_user_by_telegram_id(message.from_user.id)
+    logging.info(f"Админ {user.surname} ({user.telegram_id}) запросил список пользователей.")
     await message.answer(text)
 
 
@@ -48,7 +50,9 @@ async def delete_user(message: Message):
 
     telegram_id = int(args[1])
     await delete_user_by_telegram_id(telegram_id)
-    logging.info(f"Админ {message.from_user.id} удалил пользователя с Telegram ID {telegram_id}.")
+    user = await get_user_by_telegram_id(message.from_user.id)
+    # TODO: AttributeError: 'NoneType' object has no attribute 'surname'
+    logging.info(f"Админ {user.surname} ({user.telegram_id}) удалил пользователя с Telegram ID {telegram_id}.")
     await message.answer(f"Пользователь с Telegram ID {telegram_id} удалён (если был в базе).")
 
 
@@ -56,8 +60,9 @@ async def delete_user(message: Message):
 async def clear_control(message: Message):
     if not await is_admin(message):
         return
-    await clear_data()
-    logging.info(f"Админ {message.from_user.id} очистил таблицу TodayControl и NotHomeDistance.")
+    await clear_today_control()
+    user = await get_user_by_telegram_id(message.from_user.id)
+    logging.info(f"Админ {user.surname} ({user.telegram_id}) очистил таблицу TodayControl.")
     await message.answer("Сегодняшние отметки успешно удалены.")
 
 
@@ -66,7 +71,8 @@ async def show_control_report(message: Message):
     if not await is_admin(message):
         return
     report = await generate_report()
-    logging.info(f"Админ {message.from_user.id} запросил отчёт по TodayControl.")
+    user = await get_user_by_telegram_id(message.from_user.id)
+    logging.info(f"Админ {user.surname} ({user.telegram_id}) запросил отчёт по TodayControl.")
     await message.answer(report)
 
 
@@ -90,7 +96,8 @@ async def ping_all(message: Message):
         except Exception as e:
             logging.error(f"Ошибка отправки сообщения пользователю {user.telegram_id}: {e}")
 
-    logging.info(f"Админ {message.from_user.id} отправил массовое сообщение '{text}' {count} пользователям.")
+    user = await get_user_by_telegram_id(message.from_user.id)
+    logging.info(f"Админ {user.surname} ({user.telegram_id}) отправил массовое сообщение '{text}' {count} пользователям.")
     await message.answer(f"Сообщение отправлено {count} пользователям.")
 
 
@@ -99,7 +106,8 @@ async def start_questionnaire(message: Message):
     if not await is_admin(message):
         return
     await send_questionnaire(message.bot)
-    logging.info(f"Админ {message.from_user.id} запустил опрос по питанию.")
+    user = await get_user_by_telegram_id(message.from_user.id)
+    logging.info(f"Админ {user.surname} ({user.telegram_id}) запустил опрос по питанию.")
 
 
 @router.message(Command("quest"))
@@ -107,7 +115,8 @@ async def questionnaire(message: Message):
     if not await is_admin(message):
         return
     report = await generate_report_quest()
-    logging.info(f"Админ {message.from_user.id} запросил отчёт по опросу.")
+    user = await get_user_by_telegram_id(message.from_user.id)
+    logging.info(f"Админ {user.surname} ({user.telegram_id}) запросил отчёт по опросу.")
     await message.answer(report)
 
 
@@ -116,7 +125,8 @@ async def clear_quest(message: Message):
     if not await is_admin(message):
         return
     await clear_questionnaire()
-    logging.info(f"Админ {message.from_user.id} очистил таблицу Questionnaire.")
+    user = await get_user_by_telegram_id(message.from_user.id)
+    logging.info(f"Админ {user.surname} ({user.telegram_id}) очистил таблицу Questionnaire.")
     await message.answer("Таблица Questionnaire успешно очищена.")
 
 

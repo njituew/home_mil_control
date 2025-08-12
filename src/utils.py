@@ -5,7 +5,6 @@ import logging
 from db.utils import (
     get_all_users,
     get_all_controls,
-    get_all_distances,
     get_all_questionnaire
 )
 from aiogram import Bot
@@ -72,18 +71,21 @@ async def set_commands(bot: Bot):
 
 async def generate_report() -> str:
     users = await get_all_users()
-    
     controls = await get_all_controls()
-    controls_by_id = {c.telegram_id: c for c in controls}
-    
-    distances = await get_all_distances()
-    distances_by_id = {d.telegram_id: d.distance for d in distances}
+    controls_by_id = {c.telegram_id: c.distance for c in controls}
 
-    not_home = [
-        f"{user.surname} ({distances_by_id[user.telegram_id]/1000:.2f} км от дома)"
-        for user in users
-        if user.telegram_id in controls_by_id and not controls_by_id[user.telegram_id].is_home
-    ]
+    not_at_home, at_home = [], []
+    if controls_by_id:
+        for user in users:
+            if controls_by_id[user.telegram_id] <= 250:
+                at_home.append(
+                    f"{user.surname} ✅"
+                )
+            else:
+                not_at_home.append(
+                    f"{user.surname} ({controls_by_id[user.telegram_id]/1000:.2f} км от дома)"
+                )
+
 
     not_checked = [
         user.surname
@@ -93,9 +95,11 @@ async def generate_report() -> str:
 
     text = "Отчёт:\n"
     text += "\nНе дома:\n"
-    text += "\n".join(not_home) if not_home else "Все дома или не отмечались"
+    text += "\n".join(not_at_home) if not_at_home else "Все дома или не отмечались"
     text += "\n\nНе прошли опрос:\n"
     text += "\n".join(not_checked) if not_checked else "Все отметились"
+    text += "\n\nДома:\n"
+    text += "\n".join(at_home) if at_home else "Никто не находится дома или никто не отметился"
     return text
 
 

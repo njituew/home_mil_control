@@ -12,7 +12,6 @@ from db.utils import (
     add_user,
     get_today_control_by_id,
     add_today_control,
-    add_not_home_distance,
     add_user_questionnaire,
     get_questionnaire_by_id
 )
@@ -98,22 +97,19 @@ async def control_location(message: Message):
         return
 
     user = await get_user_by_telegram_id(message.from_user.id)
-    
     dist = await haversine(
         user.home_latitude, user.home_longitude,
         message.location.latitude, message.location.longitude
     )
-    is_home = dist <= 250
-    await add_today_control(user.telegram_id, is_home)
+    await add_today_control(user.telegram_id, dist)
     
-    if is_home:
+    if dist <= 250:
         logging.info(f"Пользователь {user.surname} ({message.from_user.id}) отправил геопозицию и находится дома.")
         await message.answer("Вы находитесь дома. Отметка сохранена.")
     else:
         logging.info(
-            f"{user.surname} ({message.from_user.id}) находится не дома. Расстояние: {dist:.2f} м. {message.location.latitude}, {message.location.longitude}"
+            f"Пользователь {user.surname} ({user.telegram_id}) находится не дома. Расстояние: {dist:.2f} м. {message.location.latitude}, {message.location.longitude}"
         )
-        await add_not_home_distance(user.telegram_id, dist)
         await message.answer("Вы находитесь не дома. Отметка сохранена.")
 
 

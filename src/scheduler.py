@@ -6,7 +6,7 @@ from src.notification import (
     send_last_chance,
 )
 import pytz
-from db.utils import clear_data
+from db.utils import clear_today_control
 
 
 def init_scheduler(bot):
@@ -33,9 +33,9 @@ def init_scheduler(bot):
         replace_existing=True
     )
     scheduler.add_job(
-        clear_data,
+        clear_today_control,
         CronTrigger(hour=19, minute=11),
-        id="clear_data",
+        id="clear_today_control",
         replace_existing=True
     )
     

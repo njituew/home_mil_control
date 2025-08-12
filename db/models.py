@@ -16,13 +16,6 @@ class TodayControl(Base):
     __tablename__ = "today_control"
     id = Column(Integer, primary_key=True, index=True)
     telegram_id = Column(Integer, unique=True, index=True)
-    is_home = Column(Boolean, nullable=False)
-
-
-class NotHomeDistance(Base):
-    __tablename__ = "not_home_distance"
-    id = Column(Integer, primary_key=True, index=True)
-    telegram_id = Column(Integer, unique=True, index=True)
     distance = Column(Float, nullable=False)
 
 
