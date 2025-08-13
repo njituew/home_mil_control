@@ -97,6 +97,8 @@ async def control_location(message: Message):
         return
 
     user = await get_user_by_telegram_id(message.from_user.id)
+    if not user: 
+        return
     dist = await haversine(
         user.home_latitude, user.home_longitude,
         message.location.latitude, message.location.longitude

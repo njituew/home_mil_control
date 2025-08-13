@@ -12,6 +12,12 @@ from db.utils import clear_today_control
 def init_scheduler(bot):
     scheduler = AsyncIOScheduler(timezone=pytz.timezone("Europe/Moscow"))
     scheduler.add_job(
+        clear_today_control,
+        CronTrigger(hour=18, minute=30),
+        id="clear_today_control",
+        replace_existing=True
+    )
+    scheduler.add_job(
         send_reminder,
         CronTrigger(hour=18, minute=40),
         args=[bot],
@@ -30,12 +36,6 @@ def init_scheduler(bot):
         CronTrigger(hour=19, minute=10),
         args=[bot],
         id="send_daily_report",
-        replace_existing=True
-    )
-    scheduler.add_job(
-        clear_today_control,
-        CronTrigger(hour=19, minute=11),
-        id="clear_today_control",
         replace_existing=True
     )
     
