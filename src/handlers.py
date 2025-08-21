@@ -71,18 +71,18 @@ async def invalid_location(message: Message):
 async def control_location(message: Message):
     # проверка, что сообщение не пересланное
     if message.forward_from or message.forward_from_chat:
-        await message.answer("Отправьте новую геолокацию, а не пересланное сообщение.")
+        await message.answer("❌ Самый хитрый? Отправь новую геолокацию, а не пересланное сообщение.")
         return
     # проверка, что отправлена именно текущая геопозиция
     if not getattr(message.location, "live_period", None):
-        await message.answer("Используйте кнопку 'Транслировать местоположение'.")
+        await message.answer("❌ Используйте кнопку 'Транслировать местоположение'.")
         return
 
     # проверка времени
     moscow_tz = pytz.timezone("Europe/Moscow")
     now = datetime.now(moscow_tz).time()
     if not (time(21, 40) <= now <= time(22, 10)):
-        await message.answer("Отправлять геолокацию нужно только с 21:40 до 22:10.")
+        await message.answer("❌ Геолокация не сохранена. Отправлять геолокацию нужно только с 21:40 до 22:10.")
         logging.warning(
             f"Пользователь {message.from_user.id} попытался отправить геопозицию вне времени."
         )
@@ -90,7 +90,7 @@ async def control_location(message: Message):
     
     # проверка, есть ли уже отметка пользователя
     if await get_today_control_by_id(message.from_user.id):
-        await message.answer("Вы уже отправляли геолокацию сегодня. Повторная отправка невозможна.")
+        await message.answer("❌ Вы уже отправляли геолокацию сегодня. Повторная отправка невозможна.")
         logging.warning(
             f"Пользователь {message.from_user.id} попытался отправить геолокацию повторно."
         )
@@ -112,7 +112,7 @@ async def control_location(message: Message):
         logging.info(
             f"Пользователь {user.surname} ({user.telegram_id}) находится не дома. Расстояние: {dist:.2f} м. {message.location.latitude}, {message.location.longitude}"
         )
-        await message.answer("Вы находитесь не дома. Отметка сохранена.")
+        await message.answer("Вы находитесь НЕ дома. Отметка сохранена.")
 
 
 @router.message(Command("ping"))
