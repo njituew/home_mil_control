@@ -68,7 +68,13 @@ async def invalid_location(message: Message):
 
 
 @router.message(F.location)
-async def control_location(message: Message):
+async def control_location(message: Message, state: FSMContext):
+    # проверка что пользователь есть в базе
+    if not await is_user_registered(message.from_user.id):
+        # начало регистрации
+        await message.answer("Для пользования ботом пройдите процесс регистрации.\nВведите вашу фамилию.")
+        await state.set_state(RegisterStates.waiting_for_surname)
+        return
     # проверка, что сообщение не пересланное
     if message.forward_from or message.forward_from_chat:
         await message.answer("❌ Самый хитрый? Отправь новую геолокацию, а не пересланное сообщение.")
