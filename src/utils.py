@@ -5,7 +5,8 @@ import logging
 from db.utils import (
     get_all_users,
     get_all_controls,
-    get_all_questionnaire
+    get_all_questionnaire,
+    get_user_by_telegram_id
 )
 from aiogram import Bot
 from aiogram.types import BotCommand, BotCommandScopeChat
@@ -32,10 +33,10 @@ async def get_admin_ids():
 
 async def is_admin(message: Message):
     admin_ids = await get_admin_ids()
-    user_id = message.from_user.id
-    if user_id not in admin_ids:
+    user = await get_user_by_telegram_id(message.from_user.id)
+    if user.telegram_id not in admin_ids:
         await message.answer("У вас нет прав для этой команды.")
-        logging.warning(f"Unauthorized access attempt by user {user_id}")
+        logging.warning(f"Пользователь {user.surname} ({user.telegram_id}) пытался использовать админскую команду.")
         return False
     return True
 
