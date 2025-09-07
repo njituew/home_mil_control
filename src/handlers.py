@@ -13,7 +13,7 @@ from db.utils import (
     get_today_control_by_id,
     add_today_control,
     add_user_questionnaire,
-    get_questionnaire_by_id
+    get_questionnaire_by_id,
 )
 import logging
 
@@ -42,17 +42,19 @@ async def cmd_start(message: Message, state: FSMContext):
 @router.message(RegisterStates.waiting_for_surname)
 async def process_surname(message: Message, state: FSMContext):
     await state.update_data(surname=message.text)
-    await message.answer("Теперь отправьте вашу домашнюю геолокацию (гео-метку телеграма по кнопке 'Транслировать местоположение' или выберите точку на карте).")
+    await message.answer(
+        "Теперь отправьте вашу домашнюю геолокацию (гео-метку телеграма по кнопке 'Транслировать местоположение' или выберите точку на карте)."
+    )
     await state.set_state(RegisterStates.waiting_for_location)
 
 
 @router.message(RegisterStates.waiting_for_location, F.location)
-async def process_location(message: Message, state: FSMContext):    
+async def process_location(message: Message, state: FSMContext):
     user_data = await state.get_data()
     surname = user_data["surname"]
     latitude = message.location.latitude
     longitude = message.location.longitude
-    
+
     # сохранение пользователя в базе данных
     await add_user(message.from_user.id, surname, latitude, longitude)
     await message.answer("Регистрация завершена.")
@@ -72,12 +74,16 @@ async def control_location(message: Message, state: FSMContext):
     # проверка что пользователь есть в базе
     if not await is_user_registered(message.from_user.id):
         # начало регистрации
-        await message.answer("Для пользования ботом пройдите процесс регистрации.\nВведите вашу фамилию.")
+        await message.answer(
+            "Для пользования ботом пройдите процесс регистрации.\nВведите вашу фамилию."
+        )
         await state.set_state(RegisterStates.waiting_for_surname)
         return
     # проверка, что сообщение не пересланное
     if message.forward_from or message.forward_from_chat:
-        await message.answer("❌ Самый хитрый? Отправь новую геолокацию, а не пересланное сообщение.")
+        await message.answer(
+            "❌ Самый хитрый? Отправь новую геолокацию, а не пересланное сообщение."
+        )
         return
     # проверка, что отправлена именно текущая геопозиция
     if not getattr(message.location, "live_period", None):
@@ -88,31 +94,39 @@ async def control_location(message: Message, state: FSMContext):
     moscow_tz = pytz.timezone("Europe/Moscow")
     now = datetime.now(moscow_tz).time()
     if not (time(21, 40) <= now <= time(22, 10)):
-        await message.answer("❌ Геолокация не сохранена. Отправлять геолокацию нужно только с 21:40 до 22:10.")
+        await message.answer(
+            "❌ Геолокация не сохранена. Отправлять геолокацию нужно только с 21:40 до 22:10."
+        )
         logging.warning(
             f"Пользователь {message.from_user.id} попытался отправить геопозицию вне времени."
         )
         return
-    
+
     # проверка, есть ли уже отметка пользователя
     if await get_today_control_by_id(message.from_user.id):
-        await message.answer("❌ Вы уже отправляли геолокацию сегодня. Повторная отправка невозможна.")
+        await message.answer(
+            "❌ Вы уже отправляли геолокацию сегодня. Повторная отправка невозможна."
+        )
         logging.warning(
             f"Пользователь {message.from_user.id} попытался отправить геолокацию повторно."
         )
         return
 
     user = await get_user_by_telegram_id(message.from_user.id)
-    if not user: 
+    if not user:
         return
     dist = await haversine(
-        user.home_latitude, user.home_longitude,
-        message.location.latitude, message.location.longitude
+        user.home_latitude,
+        user.home_longitude,
+        message.location.latitude,
+        message.location.longitude,
     )
     await add_today_control(user.telegram_id, dist)
-    
+
     if dist <= 250:
-        logging.info(f"Пользователь {user.surname} ({user.telegram_id}) отправил геопозицию и находится дома.")
+        logging.info(
+            f"Пользователь {user.surname} ({user.telegram_id}) отправил геопозицию и находится дома."
+        )
         await message.answer("Вы находитесь дома. Отметка сохранена.")
     else:
         logging.info(
@@ -129,7 +143,7 @@ async def ping(message: Message):
 @router.callback_query(F.data.startswith("questionnaire_feeding_"))
 async def questionnaire_response(data: CallbackQuery):
     user = await get_user_by_telegram_id(data.from_user.id)
-    
+
     # проверка на повторную попытку ответа
     if await get_questionnaire_by_id(user.telegram_id):
         logging.warning(
@@ -138,14 +152,18 @@ async def questionnaire_response(data: CallbackQuery):
         await data.message.answer("Вы уже ответили на опрос.")
         await data.answer()
         return
-    
+
     will_feed = data.data == "questionnaire_feeding_yes"
     await add_user_questionnaire(user.telegram_id, user.surname, will_feed)
     if will_feed:
-        logging.info(f"Пользователь {user.surname} ({user.telegram_id}) ответил на опрос: будет питаться.")
+        logging.info(
+            f"Пользователь {user.surname} ({user.telegram_id}) ответил на опрос: будет питаться."
+        )
         await data.message.answer("Вы записаны на питание.")
     else:
-        logging.info(f"Пользователь {user.surname} ({user.telegram_id}) ответил на опрос: не будет питаться.")
+        logging.info(
+            f"Пользователь {user.surname} ({user.telegram_id}) ответил на опрос: не будет питаться."
+        )
         await data.message.answer("Вы отказались от питания.")
     await data.answer()
 

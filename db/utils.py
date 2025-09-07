@@ -27,7 +27,7 @@ async def add_user(telegram_id: int, surname: str, latitude: float, longitude: f
             telegram_id=telegram_id,
             surname=surname,
             home_latitude=latitude,
-            home_longitude=longitude
+            home_longitude=longitude,
         )
         session.add(user)
         await session.commit()
@@ -41,7 +41,9 @@ async def get_all_users():
 
 async def delete_user_by_telegram_id(telegram_id: int):
     async with AsyncSessionLocal() as session:
-        result = await session.execute(select(User).where(User.telegram_id == telegram_id))
+        result = await session.execute(
+            select(User).where(User.telegram_id == telegram_id)
+        )
         user = result.scalar_one_or_none()
         if user:
             await session.delete(user)
@@ -78,7 +80,9 @@ async def clear_today_control():
 
 
 # Questionnaire
-async def add_user_questionnaire(telegram_id: int, surname: str, will_feed: bool = False):
+async def add_user_questionnaire(
+    telegram_id: int, surname: str, will_feed: bool = False
+):
     async with AsyncSessionLocal() as session:
         user = Questionnaire(
             telegram_id=telegram_id,

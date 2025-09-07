@@ -15,14 +15,14 @@ logging.basicConfig(
     format="%(asctime)s [%(levelname)s] %(message)s",
     handlers=[
         logging.StreamHandler(),
-        logging.FileHandler("bot.log", encoding="utf-8", mode="a")
-    ]
+        logging.FileHandler("bot.log", encoding="utf-8", mode="a"),
+    ],
 )
 
 
 async def main():
     logging.info("Бот запускается...")
-    
+
     bot = Bot(get_bot_token())
     dp = Dispatcher(storage=MemoryStorage())
     await init_db()
@@ -31,7 +31,7 @@ async def main():
     scheduler = init_scheduler(bot)
     scheduler.start()
     await set_commands(bot)
-    
+
     try:
         await dp.start_polling(bot)
     finally:

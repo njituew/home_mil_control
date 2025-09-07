@@ -6,7 +6,7 @@ from db.utils import (
     get_all_users,
     get_all_controls,
     get_all_questionnaire,
-    get_user_by_telegram_id
+    get_user_by_telegram_id,
 )
 from aiogram import Bot
 from aiogram.types import BotCommand, BotCommandScopeChat
@@ -20,7 +20,7 @@ async def haversine(lat1, lon1, lat2, lon2):
     lat1, lon1, lat2, lon2 = map(radians, [lat1, lon1, lat2, lon2])
     dlat = lat2 - lat1
     dlon = lon2 - lon1
-    a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
+    a = sin(dlat / 2) ** 2 + cos(lat1) * cos(lat2) * sin(dlon / 2) ** 2
     c = 2 * asin(sqrt(a))
     return R * c
 
@@ -36,7 +36,9 @@ async def is_admin(message: Message):
     user = await get_user_by_telegram_id(message.from_user.id)
     if user.telegram_id not in admin_ids:
         await message.answer("У вас нет прав для этой команды.")
-        logging.warning(f"Пользователь {user.surname} ({user.telegram_id}) пытался использовать админскую команду.")
+        logging.warning(
+            f"Пользователь {user.surname} ({user.telegram_id}) пытался использовать админскую команду."
+        )
         return False
     return True
 
@@ -44,28 +46,36 @@ async def is_admin(message: Message):
 async def set_commands(bot: Bot):
     user_commands = [
         BotCommand(command="start", description="Перезапустить бота"),
-        BotCommand(command="ping", description="Понг")
+        BotCommand(command="ping", description="Понг"),
     ]
     try:
         await bot.set_my_commands(user_commands)
     except Exception as e:
         logging.error(f"Ошибка установки пользовательских команд: {e}")
-    
+
     admin_commands = [
         BotCommand(command="users", description="Список пользователей"),
         BotCommand(command="delete", description="Удалить пользователя по Telegram ID"),
-        BotCommand(command="control", description="Посмотреть текущие отметки геолокации"),
-        BotCommand(command="clear", description="Очистить отметки геолокации за сегодня"),
-        BotCommand(command="ping_all", description="Отправить сообщение всем пользователям"),
+        BotCommand(
+            command="control", description="Посмотреть текущие отметки геолокации"
+        ),
+        BotCommand(
+            command="clear", description="Очистить отметки геолокации за сегодня"
+        ),
+        BotCommand(
+            command="ping_all", description="Отправить сообщение всем пользователям"
+        ),
         BotCommand(command="ping", description="Понг"),
         BotCommand(command="start_quest", description="Запустить опрос"),
         BotCommand(command="quest", description="Посмотреть результаты опроса"),
-        BotCommand(command="clear_quest", description="Очистить результаты опроса")
+        BotCommand(command="clear_quest", description="Очистить результаты опроса"),
     ]
     try:
         admins = await get_admin_ids()
         for admin in admins:
-            await bot.set_my_commands(admin_commands, scope=BotCommandScopeChat(chat_id=admin))
+            await bot.set_my_commands(
+                admin_commands, scope=BotCommandScopeChat(chat_id=admin)
+            )
     except Exception as e:
         logging.error(f"Ошибка установки админских команд: {e}")
 
@@ -80,14 +90,12 @@ async def generate_report() -> str:
         if user.telegram_id in controls_by_id:
             # check if user is at home
             if controls_by_id[user.telegram_id] <= 250:
-                at_home.append(
-                    f"{user.surname} ✅"
-                )
+                at_home.append(f"{user.surname} ✅")
             else:
                 not_at_home.append(
                     f"{user.surname} ({controls_by_id[user.telegram_id]/1000:.2f} км от дома)"
                 )
-        else: 
+        else:
             not_checked.append(user.surname)
 
     text = "Отчёт:\n"
@@ -111,11 +119,9 @@ async def generate_report_quest() -> str:
         for user in users
         if user.telegram_id in questionnaires_by_id
     ]
-    
+
     not_answered = [
-        user.surname
-        for user in users
-        if user.telegram_id not in questionnaires_by_id
+        user.surname for user in users if user.telegram_id not in questionnaires_by_id
     ]
 
     text = "Отчёт по опросу:\n"
