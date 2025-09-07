@@ -11,16 +11,31 @@ from db.utils import (
 from src.notification import send_questionnaire
 from src.utils import is_admin, generate_report, generate_report_quest
 import logging
+from functools import wraps
 
 
 router = Router()
 
 
-@router.message(Command("users"))
-async def list_users(message: Message):
-    if not await is_admin(message):
-        return
+def admin_only(func):
+    @wraps(func)
+    async def wrapper(message: Message, *args, **kwargs):
+        user = await get_user_by_telegram_id(message.from_user.id)
+        if not await is_admin(message.from_user.id):
+            await message.answer("У вас нет прав для этой команды.")
+            logging.warning(
+                f"Пользователь {user.surname} "
+                f"({message.from_user.id}) пытался использовать админскую команду."
+            )
+            return
+        return await func(message, *args, **kwargs)
 
+    return wrapper
+
+
+@router.message(Command("users"))
+@admin_only
+async def list_users(message: Message):
     users = await get_all_users()
     if not users:
         await message.answer("Нет зарегистрированных пользователей.")
@@ -41,10 +56,8 @@ async def list_users(message: Message):
 
 
 @router.message(Command("delete"))
+@admin_only
 async def delete_user(message: Message):
-    if not await is_admin(message):
-        return
-
     args = message.text.split()
     if len(args) != 2 or not args[1].isdigit():
         await message.answer("Используйте команду в формате: /delete <telegram_id>")
@@ -63,9 +76,8 @@ async def delete_user(message: Message):
 
 
 @router.message(Command("clear"))
+@admin_only
 async def clear_control(message: Message):
-    if not await is_admin(message):
-        return
     await clear_today_control()
     user = await get_user_by_telegram_id(message.from_user.id)
     logging.info(
@@ -75,9 +87,8 @@ async def clear_control(message: Message):
 
 
 @router.message(Command("control"))
+@admin_only
 async def show_control_report(message: Message):
-    if not await is_admin(message):
-        return
     report = await generate_report()
     user = await get_user_by_telegram_id(message.from_user.id)
     logging.info(
@@ -87,10 +98,8 @@ async def show_control_report(message: Message):
 
 
 @router.message(Command("ping_all"))
+@admin_only
 async def ping_all(message: Message):
-    if not await is_admin(message):
-        return
-
     args = message.text.split(maxsplit=1)
     if len(args) < 2 or not args[1].strip():
         await message.answer("Используйте команду в формате: /ping_all {текст}")
@@ -116,9 +125,8 @@ async def ping_all(message: Message):
 
 
 @router.message(Command("start_quest"))
+@admin_only
 async def start_questionnaire(message: Message):
-    if not await is_admin(message):
-        return
     await send_questionnaire(message.bot)
     user = await get_user_by_telegram_id(message.from_user.id)
     logging.info(
@@ -127,9 +135,8 @@ async def start_questionnaire(message: Message):
 
 
 @router.message(Command("quest"))
+@admin_only
 async def questionnaire(message: Message):
-    if not await is_admin(message):
-        return
     report = await generate_report_quest()
     user = await get_user_by_telegram_id(message.from_user.id)
     logging.info(f"Админ {user.surname} ({user.telegram_id}) запросил отчёт по опросу.")
@@ -137,9 +144,8 @@ async def questionnaire(message: Message):
 
 
 @router.message(Command("clear_quest"))
+@admin_only
 async def clear_quest(message: Message):
-    if not await is_admin(message):
-        return
     await clear_questionnaire()
     user = await get_user_by_telegram_id(message.from_user.id)
     logging.info(

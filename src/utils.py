@@ -31,16 +31,9 @@ async def get_admin_ids():
         return [admin["chat_id"] for admin in data["admins"]]
 
 
-async def is_admin(message: Message):
+async def is_admin(telegram_id: int) -> bool:
     admin_ids = await get_admin_ids()
-    user = await get_user_by_telegram_id(message.from_user.id)
-    if user.telegram_id not in admin_ids:
-        await message.answer("У вас нет прав для этой команды.")
-        logging.warning(
-            f"Пользователь {user.surname} ({user.telegram_id}) пытался использовать админскую команду."
-        )
-        return False
-    return True
+    return telegram_id in admin_ids
 
 
 async def set_commands(bot: Bot):
