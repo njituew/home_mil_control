@@ -48,9 +48,9 @@ async def list_users(message: Message):
             f"Telegram ID: {user.telegram_id}, "
             f"Домашний адрес: {user.home_latitude}, {user.home_longitude}\n"
         )
-    user = await get_user_by_telegram_id(message.from_user.id)
+    admin = await get_user_by_telegram_id(message.from_user.id)
     logging.info(
-        f"Админ {user.surname} ({user.telegram_id}) запросил список пользователей."
+        f"Админ {admin.surname} ({admin.telegram_id}) запросил список пользователей."
     )
     await message.answer(text)
 
@@ -63,15 +63,24 @@ async def delete_user(message: Message):
         await message.answer("Используйте команду в формате: /delete <telegram_id>")
         return
 
-    telegram_id = int(args[1])
-    await delete_user_by_telegram_id(telegram_id)
-    user = await get_user_by_telegram_id(message.from_user.id)
-    # TODO: AttributeError: 'NoneType' object has no attribute 'surname'
+    admin = await get_user_by_telegram_id(message.from_user.id)
+    deleted_user = await get_user_by_telegram_id(int(args[1]))
+
+    if deleted_user is None:
+        logging.info(
+            f"Админ {admin.surname} ({admin.telegram_id}) "
+            f"попытался удалилить несуществующего пользователя с Telegram ID {args[1]}."
+        )
+        await message.answer(f"❌ Пользователь с Telegram ID {args[1]} не найден в базе.")
+        return
+
+    await delete_user_by_telegram_id(deleted_user.telegram_id)
     logging.info(
-        f"Админ {user.surname} ({user.telegram_id}) удалил пользователя с Telegram ID {telegram_id}."
+        f"Админ {admin.surname} ({admin.telegram_id}) "
+        f"удалил пользователя {deleted_user.surname} ({deleted_user.telegram_id})."
     )
     await message.answer(
-        f"Пользователь с Telegram ID {telegram_id} удалён (если был в базе)."
+        f"🗑️ Пользователь {deleted_user.surname} ({deleted_user.telegram_id}) удалён."
     )
 
 
@@ -79,9 +88,9 @@ async def delete_user(message: Message):
 @admin_only
 async def clear_control(message: Message):
     await clear_today_control()
-    user = await get_user_by_telegram_id(message.from_user.id)
+    admin = await get_user_by_telegram_id(message.from_user.id)
     logging.info(
-        f"Админ {user.surname} ({user.telegram_id}) очистил таблицу TodayControl."
+        f"Админ {admin.surname} ({admin.telegram_id}) очистил таблицу TodayControl."
     )
     await message.answer("Сегодняшние отметки успешно удалены.")
 
@@ -90,9 +99,9 @@ async def clear_control(message: Message):
 @admin_only
 async def show_control_report(message: Message):
     report = await generate_report()
-    user = await get_user_by_telegram_id(message.from_user.id)
+    admin = await get_user_by_telegram_id(message.from_user.id)
     logging.info(
-        f"Админ {user.surname} ({user.telegram_id}) запросил отчёт по TodayControl."
+        f"Админ {admin.surname} ({admin.telegram_id}) запросил отчёт по TodayControl."
     )
     await message.answer(report)
 
@@ -117,9 +126,9 @@ async def ping_all(message: Message):
                 f"Ошибка отправки сообщения пользователю {user.telegram_id}: {e}"
             )
 
-    user = await get_user_by_telegram_id(message.from_user.id)
+    admin = await get_user_by_telegram_id(message.from_user.id)
     logging.info(
-        f"Админ {user.surname} ({user.telegram_id}) отправил массовое сообщение '{text}' {count} пользователям."
+        f"Админ {admin.surname} ({admin.telegram_id}) отправил массовое сообщение '{text}' {count} пользователям."
     )
     await message.answer(f"Сообщение отправлено {count} пользователям.")
 
@@ -128,9 +137,9 @@ async def ping_all(message: Message):
 @admin_only
 async def start_questionnaire(message: Message):
     await send_questionnaire(message.bot)
-    user = await get_user_by_telegram_id(message.from_user.id)
+    admin = await get_user_by_telegram_id(message.from_user.id)
     logging.info(
-        f"Админ {user.surname} ({user.telegram_id}) запустил опрос по питанию."
+        f"Админ {admin.surname} ({admin.telegram_id}) запустил опрос по питанию."
     )
 
 
@@ -138,8 +147,8 @@ async def start_questionnaire(message: Message):
 @admin_only
 async def questionnaire(message: Message):
     report = await generate_report_quest()
-    user = await get_user_by_telegram_id(message.from_user.id)
-    logging.info(f"Админ {user.surname} ({user.telegram_id}) запросил отчёт по опросу.")
+    admin = await get_user_by_telegram_id(message.from_user.id)
+    logging.info(f"Админ {admin.surname} ({admin.telegram_id}) запросил отчёт по опросу.")
     await message.answer(report)
 
 
@@ -147,9 +156,9 @@ async def questionnaire(message: Message):
 @admin_only
 async def clear_quest(message: Message):
     await clear_questionnaire()
-    user = await get_user_by_telegram_id(message.from_user.id)
+    admin = await get_user_by_telegram_id(message.from_user.id)
     logging.info(
-        f"Админ {user.surname} ({user.telegram_id}) очистил таблицу Questionnaire."
+        f"Админ {admin.surname} ({admin.telegram_id}) очистил таблицу Questionnaire."
     )
     await message.answer("Таблица Questionnaire успешно очищена.")
 
