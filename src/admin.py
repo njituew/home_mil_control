@@ -71,7 +71,9 @@ async def delete_user(message: Message):
             f"Админ {admin.surname} ({admin.telegram_id}) "
             f"попытался удалилить несуществующего пользователя с Telegram ID {args[1]}."
         )
-        await message.answer(f"❌ Пользователь с Telegram ID {args[1]} не найден в базе.")
+        await message.answer(
+            f"❌ Пользователь с Telegram ID {args[1]} не найден в базе."
+        )
         return
 
     await delete_user_by_telegram_id(deleted_user.telegram_id)
@@ -148,7 +150,9 @@ async def start_questionnaire(message: Message):
 async def questionnaire(message: Message):
     report = await generate_report_quest()
     admin = await get_user_by_telegram_id(message.from_user.id)
-    logging.info(f"Админ {admin.surname} ({admin.telegram_id}) запросил отчёт по опросу.")
+    logging.info(
+        f"Админ {admin.surname} ({admin.telegram_id}) запросил отчёт по опросу."
+    )
     await message.answer(report)
 
 
