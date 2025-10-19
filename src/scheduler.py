@@ -2,8 +2,8 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
 from src.notification import (
     send_reminder,
-    send_daily_report,
     send_last_chance,
+    send_daily_report,
 )
 import pytz
 from db.utils import clear_today_control

@@ -79,8 +79,9 @@ async def generate_report() -> str:
     controls_by_id = {c.telegram_id: c.distance for c in controls}
 
     at_home, not_at_home, not_checked = [], [], []
+
     for user in users:
-        if user.telegram_id in controls_by_id:
+        if user.telegram_id in controls_by_id:  # if user has a control record
             # check if user is at home
             if controls_by_id[user.telegram_id] <= 250:
                 at_home.append(f"{user.surname} ✅")
@@ -88,16 +89,19 @@ async def generate_report() -> str:
                 not_at_home.append(
                     f"{user.surname} ({controls_by_id[user.telegram_id]/1000:.2f} км от дома)"
                 )
-        else:
+        else:  # user has no control record
             not_checked.append(user.surname)
 
-    text = "Отчёт:\n"
-    text += "\nНе дома:\n"
-    text += "\n".join(not_at_home) if not_at_home else "Все дома или все не отметились"
-    text += "\n\nНе прошли опрос:\n"
-    text += "\n".join(not_checked) if not_checked else "Все отметились"
-    text += "\n\nДома:\n"
-    text += "\n".join(at_home) if at_home else "Все не дома или все не отметились"
+    text = (
+        "Отчёт:\n"
+        "\nНе дома:\n"
+        f"{'\n'.join(not_at_home) if not_at_home else 'Все дома или все не отметились'}"
+        "\n\nНе прошли опрос:\n"
+        f"{'\n'.join(not_checked) if not_checked else 'Все отметились'}"
+        "\n\nДома:\n"
+        f"{'\n'.join(at_home) if at_home else 'Все не дома или все не отметились'}"
+    )
+
     return text
 
 
