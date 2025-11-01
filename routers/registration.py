@@ -53,8 +53,9 @@ async def save_user(message: Message, state: FSMContext):
     await add_user(message.from_user.id, user_data["surname"], user_data["latitude"], user_data["longitude"])
     await message.answer("Регистрация завершена.")
     logging.info(
-        f"Зарегистрирован новый пользователь: {message.from_user.id}, {user_data["surname"]}, {user_data["latitude"]}, {user_data["longitude"]}"
+        f'Зарегистрирован новый пользователь: {message.from_user.id}, {user_data["surname"]}, {user_data["latitude"]}, {user_data["longitude"]}'
     )
+
     await state.clear()
 
 
