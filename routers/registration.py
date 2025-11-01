@@ -50,10 +50,19 @@ async def process_location(message: Message, state: FSMContext):
 
 async def save_user(message: Message, state: FSMContext):
     user_data = await state.get_data()
-    await add_user(message.from_user.id, user_data["surname"], user_data["latitude"], user_data["longitude"])
+    await add_user(
+        message.from_user.id,
+        user_data["surname"],
+        user_data["latitude"],
+        user_data["longitude"],
+    )
     await message.answer("Регистрация завершена.")
     logging.info(
-        f'Зарегистрирован новый пользователь: {message.from_user.id}, {user_data["surname"]}, {user_data["latitude"]}, {user_data["longitude"]}'
+        f"Зарегистрирован новый пользователь: "
+        f"{message.from_user.id}, "
+        f"{user_data['surname']}, "
+        f"{user_data['latitude']}, "
+        f"{user_data['longitude']}"
     )
 
     await state.clear()

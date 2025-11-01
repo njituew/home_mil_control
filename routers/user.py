@@ -25,7 +25,21 @@ router = Router()
 
 
 @router.message(F.location)
-async def control_location(message: Message, state: FSMContext):
+async def control_location(message: Message, state: FSMContext) -> None:
+    """
+    Обрабатывает получение геолокации от пользователя.
+
+    При успешных проверках вычисляет расстояние от дома пользователя до текущего местоположения
+    и сохраняет отметку. Отправляет пользователю соответствующее уведомление.
+
+    Args:
+        message (Message): Объект входящего сообщения с геолокацией.
+        state (FSMContext): Контекст состояния машины состояний (для начала процесса регистрации).
+
+    Returns:
+        None
+    """
+
     user = await get_user_by_telegram_id(message.from_user.id)
     if not user:
         return
@@ -38,7 +52,7 @@ async def control_location(message: Message, state: FSMContext):
         )
         await state.set_state(RegisterStates.waiting_for_surname)
         return
-    
+
     # проверка, что сообщение не пересланное
     if message.forward_from or message.forward_from_chat:
         logging.warning(
@@ -48,7 +62,7 @@ async def control_location(message: Message, state: FSMContext):
             "❌ Самый хитрый? Отправь новую геолокацию, а не пересланное сообщение."
         )
         return
-    
+
     # проверка, что отправлена именно текущая геопозиция
     if not getattr(message.location, "live_period", None):
         logging.warning(
@@ -71,7 +85,7 @@ async def control_location(message: Message, state: FSMContext):
             return
     else:
         logging.info(f"Проверка времени пропущена для {user.telegram_id}")
-    
+
     # проверка, есть ли уже отметка пользователя
     if await get_today_control_by_id(message.from_user.id):
         await message.answer(
@@ -104,11 +118,37 @@ async def control_location(message: Message, state: FSMContext):
 
 @router.message(Command("ping"))
 async def ping(message: Message):
+    """
+    Проверка пульса.
+
+    Args:
+        message (Message): Объект входящего сообщения.
+    """
     await message.answer("понг")
 
 
 @router.callback_query(F.data.startswith("questionnaire_feeding_"))
 async def questionnaire_response(data: CallbackQuery):
+    """
+    Обрабатывает ответ пользователя на опрос.
+
+    Проверяет, не отвечал ли пользователь ранее на опрос. Если ответ уже был дан,
+    уведомляет пользователя об этом. В противном случае сохраняет выбранный вариант
+    в базу.
+
+    Args:
+        data (CallbackQuery): Объект обратного вызова кнопки.
+
+    Returns:
+        None: Функция ничего не возвращает. Отправляет сообщение пользователю и подтверждает
+              нажатие кнопки.
+
+    Logging:
+        - Записывает в лог:
+            - попытку повторного ответа;
+            - успешный ответ (с указанием выбора: будет или не будет питаться).
+    """
+    
     user = await get_user_by_telegram_id(data.from_user.id)
 
     # проверка на повторную попытку ответа
