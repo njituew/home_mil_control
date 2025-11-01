@@ -1,76 +1,35 @@
 from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.context import FSMContext
-from aiogram.fsm.state import State, StatesGroup
 from aiogram.filters import Command
-from datetime import datetime, time
-import pytz
+
 from src.utils import haversine
+from src.config import is_test_mode
 from db.utils import (
     is_user_registered,
     get_user_by_telegram_id,
-    add_user,
     get_today_control_by_id,
     add_today_control,
     add_user_questionnaire,
     get_questionnaire_by_id,
 )
+
+from routers.registration import RegisterStates
+
+from datetime import datetime, time
+import pytz
 import logging
 
 
 router = Router()
 
 
-# стейты регистрации
-class RegisterStates(StatesGroup):
-    waiting_for_surname = State()
-    waiting_for_location = State()
-
-
-@router.message(Command("start"))
-async def cmd_start(message: Message, state: FSMContext):
-    # проверка регистрации пользователя
-    if await is_user_registered(message.from_user.id):
-        await message.answer("Вы уже зарегистрированы!")
-        await state.clear()
-        return
-    # начало регистрации
-    await message.answer("Введите вашу фамилию.")
-    await state.set_state(RegisterStates.waiting_for_surname)
-
-
-@router.message(RegisterStates.waiting_for_surname)
-async def process_surname(message: Message, state: FSMContext):
-    await state.update_data(surname=message.text)
-    await message.answer(
-        "Теперь отправьте вашу домашнюю геолокацию (гео-метку телеграма по кнопке 'Транслировать местоположение' или выберите точку на карте)."
-    )
-    await state.set_state(RegisterStates.waiting_for_location)
-
-
-@router.message(RegisterStates.waiting_for_location, F.location)
-async def process_location(message: Message, state: FSMContext):
-    user_data = await state.get_data()
-    surname = user_data["surname"]
-    latitude = message.location.latitude
-    longitude = message.location.longitude
-
-    # сохранение пользователя в базе данных
-    await add_user(message.from_user.id, surname, latitude, longitude)
-    await message.answer("Регистрация завершена.")
-    logging.info(
-        f"Зарегистрирован новый пользователь: {message.from_user.id}, {surname}, {latitude}, {longitude}"
-    )
-    await state.clear()
-
-
-@router.message(RegisterStates.waiting_for_location)
-async def invalid_location(message: Message):
-    await message.answer("Отправьте геолокацию.")
-
-
 @router.message(F.location)
 async def control_location(message: Message, state: FSMContext):
+    user = await get_user_by_telegram_id(message.from_user.id)
+    if not user:
+        return
+
     # проверка что пользователь есть в базе
     if not await is_user_registered(message.from_user.id):
         # начало регистрации
@@ -79,42 +38,50 @@ async def control_location(message: Message, state: FSMContext):
         )
         await state.set_state(RegisterStates.waiting_for_surname)
         return
+    
     # проверка, что сообщение не пересланное
     if message.forward_from or message.forward_from_chat:
+        logging.warning(
+            f"Пользователь {user.surname} ({user.telegram_id}) попытался переслать локацию."
+        )
         await message.answer(
             "❌ Самый хитрый? Отправь новую геолокацию, а не пересланное сообщение."
         )
         return
+    
     # проверка, что отправлена именно текущая геопозиция
     if not getattr(message.location, "live_period", None):
+        logging.warning(
+            f"Пользователь {user.surname} ({user.telegram_id}) попытался отправить точку на карте."
+        )
         await message.answer("❌ Используйте кнопку 'Транслировать местоположение'.")
         return
 
     # проверка времени
-    moscow_tz = pytz.timezone("Europe/Moscow")
-    now = datetime.now(moscow_tz).time()
-    if not (time(21, 40) <= now <= time(22, 10)):
-        await message.answer(
-            "❌ Геолокация не сохранена. Отправлять геолокацию нужно только с 21:40 до 22:10."
-        )
-        logging.warning(
-            f"Пользователь {message.from_user.id} попытался отправить геопозицию вне времени."
-        )
-        return
-
+    if not is_test_mode():
+        moscow_tz = pytz.timezone("Europe/Moscow")
+        now = datetime.now(moscow_tz).time()
+        if not (time(21, 40) <= now <= time(22, 10)):
+            await message.answer(
+                "❌ Геолокация не сохранена. Отправлять геолокацию нужно только с 21:40 до 22:10."
+            )
+            logging.warning(
+                f"Пользователь {user.surname} ({user.telegram_id}) попытался отправить геопозицию вне времени."
+            )
+            return
+    else:
+        logging.info(f"Проверка времени пропущена для {user.telegram_id}")
+    
     # проверка, есть ли уже отметка пользователя
     if await get_today_control_by_id(message.from_user.id):
         await message.answer(
             "❌ Вы уже отправляли геолокацию сегодня. Повторная отправка невозможна."
         )
         logging.warning(
-            f"Пользователь {message.from_user.id} попытался отправить геолокацию повторно."
+            f"Пользователь {user.surname} ({user.telegram_id}) попытался отправить геолокацию повторно."
         )
         return
 
-    user = await get_user_by_telegram_id(message.from_user.id)
-    if not user:
-        return
     dist = await haversine(
         user.home_latitude,
         user.home_longitude,
@@ -168,5 +135,5 @@ async def questionnaire_response(data: CallbackQuery):
     await data.answer()
 
 
-def register_handlers(dp):
+def register_user_handlers(dp):
     dp.include_router(router)

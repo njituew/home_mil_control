@@ -9,7 +9,8 @@ from db.utils import (
     clear_questionnaire,
 )
 from src.notification import send_questionnaire
-from src.utils import is_admin, generate_report, generate_report_quest
+from src.utils import is_admin
+from src.reports import generate_report, generate_report_quest
 import logging
 from functools import wraps
 

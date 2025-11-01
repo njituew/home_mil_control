@@ -1,7 +1,8 @@
 from aiogram import Bot
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from db.utils import get_all_users, get_all_controls
-from src.utils import generate_report, get_admin_ids
+from src.utils import get_admin_ids
+from src.reports import generate_report
 import logging
 
 
