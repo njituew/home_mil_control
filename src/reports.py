@@ -3,23 +3,29 @@ from db.utils import (
     get_all_controls,
     get_all_questionnaire,
 )
+from src.utils import haversine
 
 
 async def generate_report() -> str:
     users = await get_all_users()
-    controls = await get_all_controls()
-    controls_by_id = {c.telegram_id: c.distance for c in controls}
+    # controls = await get_all_controls()
+    controls_by_id = {c.telegram_id: c for c in await get_all_controls()}
 
     at_home, not_at_home, not_checked = [], [], []
+
     for user in users:
-        if user.telegram_id in controls_by_id:
-            # check if user is at home
-            if controls_by_id[user.telegram_id] <= 250:
+        control = controls_by_id.get(user.telegram_id)
+        if control:
+            dist = await haversine(
+                user.home_latitude,
+                user.home_longitude,
+                control.latitude,
+                control.longitude,
+            )
+            if dist <= 250:
                 at_home.append(f"{user.surname} ✅")
             else:
-                not_at_home.append(
-                    f"{user.surname} ({controls_by_id[user.telegram_id]/1000:.2f} км от дома)"
-                )
+                not_at_home.append(f"{user.surname} ({dist/1000:.2f} км от дома)")
         else:
             not_checked.append(user.surname)
 

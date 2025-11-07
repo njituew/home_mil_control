@@ -16,7 +16,8 @@ class TodayControl(Base):
     __tablename__ = "today_control"
     id = Column(Integer, primary_key=True, index=True)
     telegram_id = Column(Integer, unique=True, index=True)
-    distance = Column(Float, nullable=False)
+    latitude = Column(Float, nullable=False)
+    longitude = Column(Float, nullable=False)
 
 
 class Questionnaire(Base):

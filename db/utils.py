@@ -51,9 +51,13 @@ async def delete_user_by_telegram_id(telegram_id: int):
 
 
 # TodayControl
-async def add_today_control(telegram_id: int, distance: float):
+async def add_today_control(telegram_id: int, latitude: float, longitude: float):
     async with AsyncSessionLocal() as session:
-        control = TodayControl(telegram_id=telegram_id, distance=distance)
+        control = TodayControl(
+            telegram_id=telegram_id,
+            latitude=latitude,
+            longitude=longitude,
+        )
         session.add(control)
         await session.commit()
 

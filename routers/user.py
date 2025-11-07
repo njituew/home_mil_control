@@ -64,12 +64,17 @@ async def control_location(message: Message, state: FSMContext) -> None:
         return
 
     # проверка, что отправлена именно текущая геопозиция
-    if not getattr(message.location, "live_period", None):
-        logging.warning(
-            f"Пользователь {user.surname} ({user.telegram_id}) попытался отправить точку на карте."
-        )
-        await message.answer("❌ Используйте кнопку 'Транслировать местоположение'.")
-        return
+    if not is_test_mode():
+        if not getattr(message.location, "live_period", None):
+            logging.warning(
+                f"Пользователь {user.surname} ({user.telegram_id}) попытался отправить точку на карте."
+            )
+            await message.answer(
+                "❌ Используйте кнопку 'Транслировать местоположение'."
+            )
+            return
+    else:
+        logging.info(f"Проверка live пропущена для {user.telegram_id}")
 
     # проверка времени
     if not is_test_mode():
@@ -96,13 +101,19 @@ async def control_location(message: Message, state: FSMContext) -> None:
         )
         return
 
+    # обработка новой локации
+    await add_today_control(
+        user.telegram_id,
+        message.location.latitude,
+        message.location.longitude,
+    )
+
     dist = await haversine(
         user.home_latitude,
         user.home_longitude,
         message.location.latitude,
         message.location.longitude,
     )
-    await add_today_control(user.telegram_id, dist)
 
     if dist <= 250:
         logging.info(
@@ -111,7 +122,8 @@ async def control_location(message: Message, state: FSMContext) -> None:
         await message.answer("Вы находитесь дома. Отметка сохранена.")
     else:
         logging.info(
-            f"Пользователь {user.surname} ({user.telegram_id}) находится не дома. Расстояние: {dist:.2f} м. {message.location.latitude}, {message.location.longitude}"
+            f"Пользователь {user.surname} ({user.telegram_id}) находится не дома. "
+            f"Расстояние: {dist:.2f} м. {message.location.latitude}, {message.location.longitude}"
         )
         await message.answer("Вы находитесь НЕ дома. Отметка сохранена.")
 
@@ -148,7 +160,7 @@ async def questionnaire_response(data: CallbackQuery):
             - попытку повторного ответа;
             - успешный ответ (с указанием выбора: будет или не будет питаться).
     """
-    
+
     user = await get_user_by_telegram_id(data.from_user.id)
 
     # проверка на повторную попытку ответа
