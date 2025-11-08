@@ -50,6 +50,17 @@ async def set_commands(bot: Bot):
             command="clear", description="Очистить отметки геолокации за сегодня"
         ),
         BotCommand(
+            command="add_alt",
+            description="Добавление альтернативной локации для пользователя. <telegram_id> <latitude> <longitude> [комментарий]",
+        ),
+        BotCommand(
+            command="alt_list",
+            description="Показать все альтернативные локации пользователя. /alt_list <telegram_id>",
+        ),
+        BotCommand(
+            command="del_alt", description="Удалить альтернативную локацию по ID."
+        ),
+        BotCommand(
             command="ping_all", description="Отправить сообщение всем пользователям"
         ),
         BotCommand(command="ping", description="Понг"),

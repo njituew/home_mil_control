@@ -20,6 +20,15 @@ class TodayControl(Base):
     longitude = Column(Float, nullable=False)
 
 
+class AlternativeLocation(Base):
+    __tablename__ = "alternative_locations"
+    id = Column(Integer, primary_key=True, index=True)
+    telegram_id = Column(Integer, index=True)
+    latitude = Column(Float, nullable=False)
+    longitude = Column(Float, nullable=False)
+    comment = Column(String, nullable=False)
+
+
 class Questionnaire(Base):
     __tablename__ = "questionnaire"
     id = Column(Integer, primary_key=True, index=True)

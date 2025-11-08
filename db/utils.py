@@ -1,5 +1,5 @@
 from sqlalchemy import select, delete
-from db.models import User, TodayControl, Questionnaire
+from db.models import User, TodayControl, AlternativeLocation, Questionnaire
 from db.database import AsyncSessionLocal
 import logging
 
@@ -81,6 +81,60 @@ async def clear_today_control():
         await session.execute(delete(TodayControl))
         await session.commit()
         logging.info("Таблица TodayControl очищена.")
+
+
+# AlternativeLocation
+async def add_alternative_location(
+    telegram_id: int, latitude: float, longitude: float, comment: str = None
+):
+    """
+    Добавляет альтернативную локацию пользователю.
+    """
+    async with AsyncSessionLocal() as session:
+        location = AlternativeLocation(
+            telegram_id=telegram_id,
+            latitude=latitude,
+            longitude=longitude,
+            comment=comment,
+        )
+        session.add(location)
+        await session.commit()
+
+
+async def get_alternative_locations(telegram_id: int):
+    """
+    Получает все альтернативные локации конкретного пользователя.
+    """
+    async with AsyncSessionLocal() as session:
+        result = await session.execute(
+            select(AlternativeLocation).where(
+                AlternativeLocation.telegram_id == telegram_id
+            )
+        )
+        return result.scalars().all()
+
+
+async def delete_alternative_location(location_id: int):
+    """
+    Удаляет альтернативную локацию по её ID.
+    """
+    async with AsyncSessionLocal() as session:
+        result = await session.execute(
+            select(AlternativeLocation).where(AlternativeLocation.id == location_id)
+        )
+        location = result.scalar_one_or_none()
+        if location:
+            await session.delete(location)
+            await session.commit()
+
+
+async def get_all_alternative_locations():
+    """
+    Возвращает все альтернативные локации в базе.
+    """
+    async with AsyncSessionLocal() as session:
+        result = await session.execute(select(AlternativeLocation))
+        return result.scalars().all()
 
 
 # Questionnaire

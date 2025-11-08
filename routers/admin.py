@@ -6,6 +6,9 @@ from db.utils import (
     get_user_by_telegram_id,
     delete_user_by_telegram_id,
     clear_today_control,
+    add_alternative_location,
+    delete_alternative_location,
+    get_alternative_locations,
     clear_questionnaire,
 )
 from src.notification import send_questionnaire
@@ -107,6 +110,99 @@ async def show_control_report(message: Message):
         f"Админ {admin.surname} ({admin.telegram_id}) запросил отчёт по TodayControl."
     )
     await message.answer(report)
+
+
+@router.message(Command("add_alt"))
+@admin_only
+async def add_alt_location(message: Message):
+    """
+    Добавление альтернативной локации для пользователя.
+    Формат:
+    /add_alt <telegram_id> <latitude> <longitude> [комментарий]
+    Пример:
+    /add_alt 123456789 55.7558 37.6173 на даче
+    """
+    admin = await get_user_by_telegram_id(message.from_user.id)
+
+    args = message.text.split(maxsplit=4)
+    if len(args) < 4:
+        await message.answer(
+            "Используй формат:\n/add_alt <telegram_id> <latitude> <longitude> [комментарий]"
+        )
+        return
+
+    try:
+        telegram_id = int(args[1])
+        latitude = float(args[2])
+        longitude = float(args[3])
+        comment = " ".join(args[4:])
+    except ValueError:
+        await message.answer("Некорректные параметры. Проверьте формат чисел.")
+        return
+
+    await add_alternative_location(telegram_id, latitude, longitude, comment)
+    logging.info(
+        f"Админ {admin.surname} ({admin.telegram_id}) запросил отчёт по TodayControl."
+    )
+    await message.answer(f"✅ Альтернативная локация добавлена для {telegram_id}")
+
+
+@router.message(Command("alt_list"))
+@admin_only
+async def list_alt_locations(message: Message):
+    """
+    Показать все альтернативные локации пользователя.
+    Формат:
+    /alt_list <telegram_id>
+    """
+    admin = await get_user_by_telegram_id(message.from_user.id)
+
+    args = message.text.split()
+    if len(args) != 2:
+        await message.answer("Используйте формат: /alt_list <telegram_id>")
+        return
+
+    telegram_id = int(args[1])
+    locations = await get_alternative_locations(telegram_id)
+    if not locations:
+        await message.answer("У этого пользователя нет альтернативных локаций.")
+        return
+
+    text = "Альтернативные локации:\n"
+    for loc in locations:
+        text += (
+            f"ID: {loc.id} | "
+            f"Lat: {loc.latitude}, Lon: {loc.longitude} "
+            f"| Комментарий: {loc.comment or '-'}\n"
+        )
+    logging.info(
+        f"Админ {admin.surname} ({admin.telegram_id}) "
+        f"запросил альтернативные локации пользователя {telegram_id}."
+    )
+    await message.answer(text)
+
+
+@router.message(Command("del_alt"))
+@admin_only
+async def delete_alt_location_cmd(message: Message):
+    """
+    Удалить альтернативную локацию по ID.
+    Формат:
+    /del_alt <location_id>
+    """
+    admin = await get_user_by_telegram_id(message.from_user.id)
+
+    args = message.text.split()
+    if len(args) != 2 or not args[1].isdigit():
+        await message.answer("Используйте формат: /del_alt <location_id>")
+        return
+
+    location_id = int(args[1])
+    await delete_alternative_location(location_id)
+    logging.info(
+        f"Админ {admin.surname} ({admin.telegram_id}) удалил альтернативную локацию {location_id}."
+    )
+    await message.answer(f"🗑️ Альтернативная локация {location_id} удалена.")
 
 
 @router.message(Command("ping_all"))

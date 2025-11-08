@@ -1,6 +1,7 @@
 from db.utils import (
     get_all_users,
     get_all_controls,
+    get_alternative_locations,
     get_all_questionnaire,
 )
 from src.utils import haversine
@@ -14,19 +15,41 @@ async def generate_report() -> str:
 
     for user in users:
         control = controls_by_id.get(user.telegram_id)
-        if control:
-            dist = await haversine(
-                user.home_latitude,
-                user.home_longitude,
+        if not control:
+            not_checked.append(user.surname)
+            continue
+
+        dist = await haversine(
+            user.home_latitude,
+            user.home_longitude,
+            control.latitude,
+            control.longitude,
+        )
+
+        # проверка основной (домашней) локации
+        if dist <= 250:
+            at_home.append(f"{user.surname} ✅")
+            continue
+        
+        # проверка на предмет альтернативной локации
+        alt_locations = await get_alternative_locations(user.telegram_id)
+        found_alt = None
+
+        for alt in alt_locations:
+            alt_dist = await haversine(
+                alt.latitude,
+                alt.longitude,
                 control.latitude,
                 control.longitude,
             )
-            if dist <= 250:
-                at_home.append(f"{user.surname} ✅")
-            else:
-                not_at_home.append(f"{user.surname} ({dist/1000:.2f} км от дома)")
+            if alt_dist <= 250:
+                found_alt = alt
+                break
+
+        if found_alt:
+            not_at_home.append(f"{user.surname} ({found_alt.comment})")
         else:
-            not_checked.append(user.surname)
+            not_at_home.append(f"{user.surname} ({dist/1000:.2f} км от дома)")
 
     text = "Отчёт:\n"
     text += "\nНе дома:\n"
