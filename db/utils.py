@@ -116,18 +116,3 @@ async def clear_questionnaire():
         await session.execute(delete(Questionnaire))
         await session.commit()
         logging.info("All data cleared from Questionnaire table.")
-
-
-# async def clear_data():
-#     """
-#     Очищает все данные из таблиц TodayControl и NotHomeDistance в базе данных.
-
-#     Эта функция выполняет удаление всех записей из двух таблиц:
-#     - TodayControl: данные о текущих контролях пользователей.
-#     - NotHomeDistance: данные о расстоянии пользователей от дома при отсутствии отметки "дома".
-#     """
-#     async with AsyncSessionLocal() as session:
-#         await session.execute(delete(TodayControl))
-#         await session.execute(delete(NotHomeDistance))
-#         await session.commit()
-#         logging.info("All data cleared from TodayControl and NotHomeDistance tables.")
