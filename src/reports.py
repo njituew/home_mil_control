@@ -8,7 +8,6 @@ from src.utils import haversine
 
 async def generate_report() -> str:
     users = await get_all_users()
-    # controls = await get_all_controls()
     controls_by_id = {c.telegram_id: c for c in await get_all_controls()}
 
     at_home, not_at_home, not_checked = [], [], []
