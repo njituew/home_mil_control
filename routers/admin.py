@@ -10,6 +10,7 @@ from db.utils import (
     add_alternative_location,
     delete_alternative_location,
     get_alternative_locations,
+    get_all_alternative_locations,
     clear_questionnaire,
 )
 
@@ -170,7 +171,7 @@ async def add_alt_location(message: Message):
 @admin_only
 async def list_alt_locations(message: Message):
     """
-    Показывает все альтернативные локации пользователя
+    Отправляет альтернативные локации пользователя
     """
 
     args = message.text.split()
@@ -201,6 +202,48 @@ async def list_alt_locations(message: Message):
     await message.answer(text)
 
 
+@router.message(Command("all_alt"))
+@admin_only
+async def list_all_alt_locations(message: Message):
+    """
+    Отправляет все существующие альтернативные локации
+    """
+
+    admin = await get_user_by_telegram_id(message.from_user.id)
+    logging.info(
+        f"Админ {admin.surname} ({admin.telegram_id}) "
+        f"запросил все альтернативные локации."
+    )
+
+    all_locations = await get_all_alternative_locations()
+    if not all_locations:
+        await message.answer("В базе нет альтернативных локаций.")
+        return
+
+    locations_by_user = dict()
+    for loc in all_locations:
+        locations_by_user[loc.telegram_id] = locations_by_user.get(loc.telegram_id, [])
+        locations_by_user[loc.telegram_id].append(loc)
+
+    text = "Альтернативные локации:\n"
+    user_counter = 0
+    for user_id in locations_by_user:
+        user = await get_user_by_telegram_id(user_id)
+        user_counter += 1
+        text += f"{user_counter}. {user.surname} ({user.telegram_id}):\n"
+        loc_counter = 0
+        for loc in locations_by_user.get(user_id):
+            loc_counter += 1
+            text += (
+                f"\t\t\t{loc_counter}) "
+                f"ID: {loc.id} | "
+                f"Lat: {loc.latitude}, Lon: {loc.longitude} | "
+                f"{loc.comment or '-'}\n"
+            )
+
+    await message.answer(text)
+
+
 @router.message(Command("del_alt"))
 @admin_only
 async def delete_alt_location_cmd(message: Message):
@@ -215,12 +258,12 @@ async def delete_alt_location_cmd(message: Message):
 
     location_id = int(args[1])
     await delete_alternative_location(location_id)
-    
+
     admin = await get_user_by_telegram_id(message.from_user.id)
     logging.info(
         f"Админ {admin.surname} ({admin.telegram_id}) удалил альтернативную локацию {location_id}."
     )
-    
+
     await message.answer(f"🗑️ Альтернативная локация {location_id} удалена.")
 
 

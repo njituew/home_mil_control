@@ -47,15 +47,16 @@ async def set_commands(bot: Bot):
             command="control", description="Посмотреть текущие отметки геолокации"
         ),
         BotCommand(
-            command="clear", description="Очистить отметки геолокации за сегодня"
-        ),
-        BotCommand(
             command="add_alt",
             description="Добавление альтернативной локации для пользователя. <telegram_id> <latitude> <longitude> [комментарий]",
         ),
         BotCommand(
             command="user_alt",
             description="Показать все альтернативные локации пользователя. /alt_list <telegram_id>",
+        ),
+        BotCommand(
+            command="all_alt",
+            description="Показать все альтернативные локации.",
         ),
         BotCommand(
             command="del_alt", description="Удалить альтернативную локацию по ID."
@@ -67,6 +68,9 @@ async def set_commands(bot: Bot):
         BotCommand(command="start_quest", description="Запустить опрос"),
         BotCommand(command="quest", description="Посмотреть результаты опроса"),
         BotCommand(command="clear_quest", description="Очистить результаты опроса"),
+        BotCommand(
+            command="clear", description="Очистить отметки геолокации за сегодня"
+        ),
     ]
     try:
         admins = await get_admin_ids()
