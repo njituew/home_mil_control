@@ -25,7 +25,7 @@ def init_logging():
         format="%(asctime)s [%(levelname)s] %(message)s",
         handlers=[
             logging.StreamHandler(),
-            logging.FileHandler("bot.log", encoding="utf-8", mode="a"),
+            logging.FileHandler("data/logs/bot.log", encoding="utf-8", mode="a"),
         ],
     )
     return logging

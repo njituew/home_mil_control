@@ -25,7 +25,7 @@ async def main():
 
     scheduler = init_scheduler(bot)
     scheduler.start()
-    
+
     await set_commands(bot)
 
     try:
