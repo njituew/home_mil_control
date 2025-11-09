@@ -54,7 +54,7 @@ async def set_commands(bot: Bot):
             description="Добавление альтернативной локации для пользователя. <telegram_id> <latitude> <longitude> [комментарий]",
         ),
         BotCommand(
-            command="alt_list",
+            command="user_alt",
             description="Показать все альтернативные локации пользователя. /alt_list <telegram_id>",
         ),
         BotCommand(

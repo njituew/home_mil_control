@@ -166,18 +166,16 @@ async def add_alt_location(message: Message):
     await message.answer(f"✅ Альтернативная локация добавлена для {telegram_id}")
 
 
-@router.message(Command("alt_list"))
+@router.message(Command("user_alt"))
 @admin_only
 async def list_alt_locations(message: Message):
     """
     Показывает все альтернативные локации пользователя
     """
 
-    admin = await get_user_by_telegram_id(message.from_user.id)
-
     args = message.text.split()
     if len(args) != 2:
-        await message.answer("Используйте формат: /alt_list <telegram_id>")
+        await message.answer("Используйте формат: /user_alt <telegram_id>")
         return
 
     telegram_id = int(args[1])
@@ -193,9 +191,12 @@ async def list_alt_locations(message: Message):
             f"Lat: {loc.latitude}, Lon: {loc.longitude} "
             f"| Комментарий: {loc.comment or '-'}\n"
         )
+
+    admin = await get_user_by_telegram_id(message.from_user.id)
+    user = await get_user_by_telegram_id(telegram_id)
     logging.info(
         f"Админ {admin.surname} ({admin.telegram_id}) "
-        f"запросил альтернативные локации пользователя {telegram_id}."
+        f"запросил альтернативные локации пользователя {user.surname} ({user.telegram_id})."
     )
     await message.answer(text)
 
@@ -207,8 +208,6 @@ async def delete_alt_location_cmd(message: Message):
     Удаляет альтернативную локацию по ID локации
     """
 
-    admin = await get_user_by_telegram_id(message.from_user.id)
-
     args = message.text.split()
     if len(args) != 2 or not args[1].isdigit():
         await message.answer("Используйте формат: /del_alt <location_id>")
@@ -216,9 +215,12 @@ async def delete_alt_location_cmd(message: Message):
 
     location_id = int(args[1])
     await delete_alternative_location(location_id)
+    
+    admin = await get_user_by_telegram_id(message.from_user.id)
     logging.info(
         f"Админ {admin.surname} ({admin.telegram_id}) удалил альтернативную локацию {location_id}."
     )
+    
     await message.answer(f"🗑️ Альтернативная локация {location_id} удалена.")
 
 
