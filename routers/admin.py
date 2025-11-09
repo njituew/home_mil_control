@@ -1,6 +1,7 @@
 from aiogram import Router
 from aiogram.types import Message
 from aiogram.filters import Command
+
 from db.utils import (
     get_all_users,
     get_user_by_telegram_id,
@@ -11,9 +12,11 @@ from db.utils import (
     get_alternative_locations,
     clear_questionnaire,
 )
+
 from src.notification import send_questionnaire
 from src.utils import is_admin
 from src.reports import generate_report, generate_report_quest
+
 import logging
 from functools import wraps
 
@@ -40,14 +43,21 @@ def admin_only(func):
 @router.message(Command("users"))
 @admin_only
 async def list_users(message: Message):
+    """
+    Отправляет список зарегестрированных пользователей
+    """
+
     users = await get_all_users()
     if not users:
         await message.answer("Нет зарегистрированных пользователей.")
         return
 
     text = "Зарегистрированные пользователи:\n"
+    counter = 0
     for user in users:
+        counter += 1
         text += (
+            f"{counter}. "
             f"Фамилия: {user.surname}, "
             f"Telegram ID: {user.telegram_id}, "
             f"Домашний адрес: {user.home_latitude}, {user.home_longitude}\n"
@@ -62,6 +72,10 @@ async def list_users(message: Message):
 @router.message(Command("delete"))
 @admin_only
 async def delete_user(message: Message):
+    """
+    Удаляет пользователя по telegram id
+    """
+
     args = message.text.split()
     if len(args) != 2 or not args[1].isdigit():
         await message.answer("Используйте команду в формате: /delete <telegram_id>")
@@ -93,6 +107,10 @@ async def delete_user(message: Message):
 @router.message(Command("clear"))
 @admin_only
 async def clear_control(message: Message):
+    """
+    Очищает таблицу с ежедневными отметками локаций пользователей
+    """
+
     await clear_today_control()
     admin = await get_user_by_telegram_id(message.from_user.id)
     logging.info(
@@ -104,6 +122,10 @@ async def clear_control(message: Message):
 @router.message(Command("control"))
 @admin_only
 async def show_control_report(message: Message):
+    """
+    Отправляет отчёт по локациям
+    """
+
     report = await generate_report()
     admin = await get_user_by_telegram_id(message.from_user.id)
     logging.info(
@@ -116,12 +138,9 @@ async def show_control_report(message: Message):
 @admin_only
 async def add_alt_location(message: Message):
     """
-    Добавление альтернативной локации для пользователя.
-    Формат:
-    /add_alt <telegram_id> <latitude> <longitude> [комментарий]
-    Пример:
-    /add_alt 123456789 55.7558 37.6173 на даче
+    Добавляет альтернативную локацию для пользователя
     """
+
     admin = await get_user_by_telegram_id(message.from_user.id)
 
     args = message.text.split(maxsplit=4)
@@ -151,10 +170,9 @@ async def add_alt_location(message: Message):
 @admin_only
 async def list_alt_locations(message: Message):
     """
-    Показать все альтернативные локации пользователя.
-    Формат:
-    /alt_list <telegram_id>
+    Показывает все альтернативные локации пользователя
     """
+
     admin = await get_user_by_telegram_id(message.from_user.id)
 
     args = message.text.split()
@@ -186,10 +204,9 @@ async def list_alt_locations(message: Message):
 @admin_only
 async def delete_alt_location_cmd(message: Message):
     """
-    Удалить альтернативную локацию по ID.
-    Формат:
-    /del_alt <location_id>
+    Удаляет альтернативную локацию по ID локации
     """
+
     admin = await get_user_by_telegram_id(message.from_user.id)
 
     args = message.text.split()
@@ -208,6 +225,10 @@ async def delete_alt_location_cmd(message: Message):
 @router.message(Command("ping_all"))
 @admin_only
 async def ping_all(message: Message):
+    """
+    Отправляет сообщение всем пользователям
+    """
+
     args = message.text.split(maxsplit=1)
     if len(args) < 2 or not args[1].strip():
         await message.answer("Используйте команду в формате: /ping_all {текст}")
@@ -235,6 +256,10 @@ async def ping_all(message: Message):
 @router.message(Command("start_quest"))
 @admin_only
 async def start_questionnaire(message: Message):
+    """
+    Отправляет сообщение с опросом
+    """
+
     await send_questionnaire(message.bot)
     admin = await get_user_by_telegram_id(message.from_user.id)
     logging.info(
@@ -245,6 +270,10 @@ async def start_questionnaire(message: Message):
 @router.message(Command("quest"))
 @admin_only
 async def questionnaire(message: Message):
+    """
+    Отправляет результаты опроса
+    """
+
     report = await generate_report_quest()
     admin = await get_user_by_telegram_id(message.from_user.id)
     logging.info(
@@ -256,6 +285,10 @@ async def questionnaire(message: Message):
 @router.message(Command("clear_quest"))
 @admin_only
 async def clear_quest(message: Message):
+    """
+    Очищает результаты опроса
+    """
+
     await clear_questionnaire()
     admin = await get_user_by_telegram_id(message.from_user.id)
     logging.info(
