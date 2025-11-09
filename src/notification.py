@@ -6,9 +6,6 @@ from src.reports import generate_report
 import logging
 
 
-ADMINS_FILE = "admins.json"
-
-
 async def send_reminder(bot: Bot):
     logging.info("Рассылка напоминаний пользователям")
     users = await get_all_users()
