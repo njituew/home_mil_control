@@ -20,8 +20,8 @@ async def main():
 
     dp = Dispatcher(storage=MemoryStorage())
     register_registration_handlers(dp)
-    register_user_handlers(dp)
     register_admin_handlers(dp)
+    register_user_handlers(dp)
 
     scheduler = init_scheduler(bot)
     scheduler.start()

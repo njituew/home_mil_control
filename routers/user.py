@@ -161,5 +161,33 @@ async def questionnaire_response(data: CallbackQuery):
     await data.answer()
 
 
+@router.message()
+async def another_message(message: Message):
+    user = await get_user_by_telegram_id(message.from_user.id)
+    content = None
+
+    if message.text:
+        content = f"Текст: {message.text}"
+    elif message.photo:
+        content = "Фото"
+    elif message.sticker:
+        content = f"Стикер: {message.sticker.emoji or 'без emoji'}"
+    elif message.document:
+        content = f"Документ: {message.document.file_name}"
+    elif message.voice:
+        content = "Голосовое сообщение"
+    elif message.video:
+        content = "Видео"
+    else:
+        content = "Неизвестный тип сообщения"
+
+    logging.info(
+        f"Необработанное сообщение от {user.surname} "
+        f"({user.telegram_id}): {content}"
+    )
+
+    await message.answer("🪖")
+
+
 def register_user_handlers(dp):
     dp.include_router(router)
