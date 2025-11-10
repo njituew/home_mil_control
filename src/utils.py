@@ -32,8 +32,8 @@ async def is_admin(telegram_id: int) -> bool:
 
 async def set_commands(bot: Bot):
     user_commands = [
-        BotCommand(command="start", description="Перезапустить бота"),
         BotCommand(command="ping", description="Понг"),
+        BotCommand(command="info", description="Откуда ноги растут"),
     ]
     try:
         await bot.set_my_commands(user_commands)
@@ -71,6 +71,7 @@ async def set_commands(bot: Bot):
         BotCommand(
             command="clear", description="Очистить отметки геолокации за сегодня"
         ),
+        BotCommand(command="info", description="Откуда ноги растут"),
     ]
     try:
         admins = await get_admin_ids()

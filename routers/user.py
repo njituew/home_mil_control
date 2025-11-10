@@ -126,6 +126,14 @@ async def ping(message: Message):
     await message.answer("понг")
 
 
+@router.message(Command("info"))
+async def project_info(message: Message):
+    """
+    GitHub 🥷
+    """
+    await message.answer("GitHub:\nhttps://github.com/njituew/home_mil_control/")
+
+
 @router.callback_query(F.data.startswith("questionnaire_feeding_"))
 async def questionnaire_response(data: CallbackQuery):
     """
