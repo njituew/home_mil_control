@@ -131,6 +131,8 @@ async def project_info(message: Message):
     """
     GitHub 🥷
     """
+    user = await get_user_by_telegram_id(message.from_user.id)
+    logging.info(f"Пользователь {user.surname} ({user.telegram_id}) использовал /info.")
     await message.answer("GitHub:\nhttps://github.com/njituew/home_mil_control/")
 
 
