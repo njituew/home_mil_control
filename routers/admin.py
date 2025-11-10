@@ -86,7 +86,7 @@ async def delete_user(message: Message):
     deleted_user = await get_user_by_telegram_id(int(args[1]))
 
     if deleted_user is None:
-        logging.info(
+        logging.warning(
             f"Админ {admin.surname} ({admin.telegram_id}) "
             f"попытался удалилить несуществующего пользователя с Telegram ID {args[1]}."
         )
@@ -142,8 +142,6 @@ async def add_alt_location(message: Message):
     Добавляет альтернативную локацию для пользователя
     """
 
-    admin = await get_user_by_telegram_id(message.from_user.id)
-
     args = message.text.split(maxsplit=4)
     if len(args) < 4:
         await message.answer(
@@ -160,11 +158,27 @@ async def add_alt_location(message: Message):
         await message.answer("Некорректные параметры. Проверьте формат чисел.")
         return
 
+    admin = await get_user_by_telegram_id(message.from_user.id)
+    user = await get_user_by_telegram_id(telegram_id)
+    if user is None:
+        logging.warning(
+            f"Админ {admin.surname} ({admin.telegram_id}) "
+            f"попытался добавить локацию несуществующему пользователю {telegram_id}."
+        )
+        await message.answer(
+            f"❌ Пользователь с Telegram ID {telegram_id} не найден в базе."
+        )
+        return
+
     await add_alternative_location(telegram_id, latitude, longitude, comment)
+
     logging.info(
-        f"Админ {admin.surname} ({admin.telegram_id}) запросил отчёт по TodayControl."
+        f"Админ {admin.surname} ({admin.telegram_id}) "
+        f"добавил альтернативную локацию для пользователя {user.surname} ({user.telegram_id})."
     )
-    await message.answer(f"✅ Альтернативная локация добавлена для {telegram_id}")
+    await message.answer(
+        f"✅ Альтернативная локация добавлена для {user.surname} ({user.telegram_id}"
+    )
 
 
 @router.message(Command("user_alt"))
