@@ -15,7 +15,7 @@ cd home_mil_control
 ```bash
 python -m venv venv
 ```
-masOS/Linux:
+macOS/Linux:
 ```bash
 source venv/bin/activate
 ```
@@ -30,11 +30,14 @@ pip install -r requirements.txt
 
 
 ## Настройка окружения
-1. В корне проекта создайте файл `.env`, добавьте туда токен телеграм бота и Database Data Source Name в формате:
+1. В корне проекта есть шаблон для файла окружения, просто скопируйте его и переименуйте в `.env`.
+
+(Linux/macOS):
+```bash
+cp .env.template .env
 ```
-BOT_TOKEN = "ВАШ_ТОКЕН"
-DATABASE_DSN = "sqlite+aiosqlite:///ВАШ_ПУТЬ.sqlite"
-```
+Добавьте токен своего бота в переменную `BOT_TOKEN`.
+
 2. В корне проекта создайте файл `admins.json`, добавьте туда telegram id админов в формате:
 ```json
 {
@@ -51,4 +54,3 @@ DATABASE_DSN = "sqlite+aiosqlite:///ВАШ_ПУТЬ.sqlite"
 ```bash
 python main.py
 ```
-Логи будут сохранены в файл `bot.log`.

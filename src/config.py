@@ -19,13 +19,20 @@ def get_database_dsn() -> str:
     return database_dsn
 
 
+def get_logs_path() -> str:
+    load_dotenv()
+    logs_path = os.getenv("LOGS_PATH")
+    return logs_path
+
+
 def init_logging():
+    file_path = get_logs_path()
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s [%(levelname)s] %(message)s",
         handlers=[
             logging.StreamHandler(),
-            logging.FileHandler("data/logs/bot.log", encoding="utf-8", mode="a"),
+            logging.FileHandler(file_path, encoding="utf-8", mode="a"),
         ],
     )
     return logging
