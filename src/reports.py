@@ -30,7 +30,7 @@ async def generate_report() -> str:
         if dist <= 250:
             at_home.append(f"{user.surname} ✅")
             continue
-        
+
         # проверка на предмет альтернативной локации
         alt_locations = await get_alternative_locations(user.telegram_id)
         found_alt = None
