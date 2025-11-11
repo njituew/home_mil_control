@@ -85,7 +85,7 @@ async def delete_user(message: Message):
     admin = await get_user_by_telegram_id(message.from_user.id)
     deleted_user = await get_user_by_telegram_id(int(args[1]))
 
-    if deleted_user is None:
+    if not deleted_user:
         logging.warning(
             f"Админ {admin.surname} ({admin.telegram_id}) "
             f"попытался удалилить несуществующего пользователя с Telegram ID {args[1]}."
@@ -160,7 +160,7 @@ async def add_alt_location(message: Message):
 
     admin = await get_user_by_telegram_id(message.from_user.id)
     user = await get_user_by_telegram_id(telegram_id)
-    if user is None:
+    if not user:
         logging.warning(
             f"Админ {admin.surname} ({admin.telegram_id}) "
             f"попытался добавить локацию несуществующему пользователю {telegram_id}."
@@ -177,7 +177,7 @@ async def add_alt_location(message: Message):
         f"добавил альтернативную локацию для пользователя {user.surname} ({user.telegram_id})."
     )
     await message.answer(
-        f"✅ Альтернативная локация добавлена для {user.surname} ({user.telegram_id}"
+        f"✅ Альтернативная локация добавлена для {user.surname} ({user.telegram_id})"
     )
 
 
