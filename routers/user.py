@@ -1,4 +1,4 @@
-from aiogram import Router, F
+from aiogram import Router, F, BaseMiddleware
 from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.context import FSMContext
 from aiogram.filters import Command
@@ -21,7 +21,28 @@ import pytz
 import logging
 
 
+class RegistrationCheckMiddleware(BaseMiddleware):
+    async def __call__(self, handler, event, data):
+        if not await is_user_registered(event.from_user.id):
+            state: FSMContext = data.get("state")
+            if isinstance(event, Message):
+                await event.answer(
+                    "Пройдите процесс регистрации перед отправкой сообщения.\nВведите вашу фамилию."
+                )
+                await state.set_state(RegisterStates.waiting_for_surname)
+            elif isinstance(event, CallbackQuery):
+                await event.message.answer(
+                    "Пройдите процесс регистрации перед отправкой сообщения.\nВведите вашу фамилию."
+                )
+                await state.set_state(RegisterStates.waiting_for_surname)
+                await event.answer()
+            return
+        return await handler(event, data)
+
+
 router = Router()
+router.message.middleware(RegistrationCheckMiddleware())
+router.callback_query.middleware(RegistrationCheckMiddleware())
 
 
 @router.message(F.location)
@@ -31,17 +52,6 @@ async def control_location(message: Message, state: FSMContext) -> None:
     """
 
     user = await get_user_by_telegram_id(message.from_user.id)
-    if not user:
-        return
-
-    # проверка что пользователь есть в базе
-    if not await is_user_registered(message.from_user.id):
-        # начало регистрации
-        await message.answer(
-            "Для пользования ботом пройдите процесс регистрации.\nВведите вашу фамилию."
-        )
-        await state.set_state(RegisterStates.waiting_for_surname)
-        return
 
     # проверка, что сообщение не пересланное
     if message.forward_from or message.forward_from_chat:

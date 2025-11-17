@@ -29,6 +29,9 @@ def admin_only(func):
     @wraps(func)
     async def wrapper(message: Message, *args, **kwargs):
         user = await get_user_by_telegram_id(message.from_user.id)
+        if not user:
+            await message.answer("Вы не зарегистрированы.")
+            return
         if not await is_admin(message.from_user.id):
             await message.answer("У вас нет прав для этой команды.")
             logging.warning(
