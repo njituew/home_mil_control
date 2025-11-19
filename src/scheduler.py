@@ -33,7 +33,7 @@ def init_scheduler(bot):
     )
     scheduler.add_job(
         send_daily_report,
-        CronTrigger(hour=19, minute=11),
+        CronTrigger(hour=19, minute=10),
         args=[bot],
         id="send_daily_report",
         replace_existing=True,
