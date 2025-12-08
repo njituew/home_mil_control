@@ -3,13 +3,14 @@ from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.context import FSMContext
 from aiogram.filters import Command
 
-from src.utils import haversine
+# from src.utils import haversine
+from src.locations import process_loc
 from src.config import is_test_mode
 from db.utils import (
     is_user_registered,
     get_user_by_telegram_id,
     get_today_control_by_id,
-    add_today_control,
+    # add_today_control,
     add_user_questionnaire,
     get_questionnaire_by_id,
 )
@@ -102,15 +103,20 @@ async def control_location(message: Message, state: FSMContext) -> None:
         return
 
     # обработка новой локации
-    await add_today_control(
-        user.telegram_id,
-        message.location.latitude,
-        message.location.longitude,
-    )
+    # await add_today_control(
+    #     user.telegram_id,
+    # message.location.latitude,
+    # message.location.longitude,
+    # )
 
-    dist = await haversine(
-        user.home_latitude,
-        user.home_longitude,
+    # dist = await haversine(
+    #     user.home_latitude,
+    #     user.home_longitude,
+    #     message.location.latitude,
+    #     message.location.longitude,
+    # )
+    dist = await process_loc(
+        user,
         message.location.latitude,
         message.location.longitude,
     )
