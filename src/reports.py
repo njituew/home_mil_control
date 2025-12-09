@@ -4,7 +4,7 @@ from db.utils import (
     get_alternative_locations,
     get_all_questionnaire,
 )
-from src.utils import haversine
+from src.location import haversine
 
 
 async def generate_report() -> str:
