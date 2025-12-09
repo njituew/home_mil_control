@@ -14,7 +14,7 @@ from src.exceptions import (
 from aiogram.types import Message
 
 
-async def haversine(lat1, lon1, lat2, lon2) -> float:
+async def haversine(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     """
     Возвращает расстояние между двумя точками (в метрах) по координатам.
     """
