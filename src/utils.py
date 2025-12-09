@@ -1,22 +1,7 @@
 from aiogram import Bot
 from aiogram.types import BotCommand, BotCommandScopeChat
-
-from math import radians, cos, sin, asin, sqrt
 import json
 import logging
-
-
-async def haversine(lat1, lon1, lat2, lon2):
-    """
-    Возвращает расстояние между двумя точками (в метрах) по координатам.
-    """
-    R = 6371000  # Радиус Земли в метрах
-    lat1, lon1, lat2, lon2 = map(radians, [lat1, lon1, lat2, lon2])
-    dlat = lat2 - lat1
-    dlon = lon2 - lon1
-    a = sin(dlat / 2) ** 2 + cos(lat1) * cos(lat2) * sin(dlon / 2) ** 2
-    c = 2 * asin(sqrt(a))
-    return R * c
 
 
 async def get_admin_ids():
