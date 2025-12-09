@@ -1,43 +1,21 @@
-from aiogram import Router, F, BaseMiddleware
+from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.context import FSMContext
 from aiogram.filters import Command
-
-from src.utils import haversine
-from src.config import is_test_mode
 from db.utils import (
-    is_user_registered,
     get_user_by_telegram_id,
-    get_today_control_by_id,
-    add_today_control,
     add_user_questionnaire,
     get_questionnaire_by_id,
 )
-
-from routers.registration import RegisterStates
-
-from datetime import datetime, time
-import pytz
+from src.location import process_location
+from src.exceptions import (
+    ForwardedMessage,
+    NotLiveLocation,
+    LocationTimeOut,
+    LocationAlreadyExists,
+)
 import logging
-
-
-class RegistrationCheckMiddleware(BaseMiddleware):
-    async def __call__(self, handler, event, data):
-        if not await is_user_registered(event.from_user.id):
-            state: FSMContext = data.get("state")
-            if isinstance(event, Message):
-                await event.answer(
-                    "Пройдите процесс регистрации перед отправкой сообщения.\nВведите вашу фамилию."
-                )
-                await state.set_state(RegisterStates.waiting_for_surname)
-            elif isinstance(event, CallbackQuery):
-                await event.message.answer(
-                    "Пройдите процесс регистрации перед отправкой сообщения.\nВведите вашу фамилию."
-                )
-                await state.set_state(RegisterStates.waiting_for_surname)
-                await event.answer()
-            return
-        return await handler(event, data)
+from src.middleware import RegistrationCheckMiddleware
 
 
 router = Router()
@@ -53,67 +31,26 @@ async def control_location(message: Message, state: FSMContext) -> None:
 
     user = await get_user_by_telegram_id(message.from_user.id)
 
-    # проверка, что сообщение не пересланное
-    if message.forward_from or message.forward_from_chat:
-        logging.warning(
-            f"Пользователь {user.surname} ({user.telegram_id}) попытался переслать локацию."
-        )
+    try:
+        dist = await process_location(user, message)
+    except ForwardedMessage:
         await message.answer(
             "❌ Самый хитрый? Отправь новую геолокацию, а не пересланное сообщение."
         )
         return
-
-    # проверка, что отправлена именно текущая геопозиция
-    if not is_test_mode():
-        if not getattr(message.location, "live_period", None):
-            logging.warning(
-                f"Пользователь {user.surname} ({user.telegram_id}) попытался отправить точку на карте."
-            )
-            await message.answer(
-                "❌ Используйте кнопку 'Транслировать местоположение'."
-            )
-            return
-    else:
-        logging.info(f"Проверка live пропущена для {user.telegram_id}")
-
-    # проверка времени
-    if not is_test_mode():
-        moscow_tz = pytz.timezone("Europe/Moscow")
-        now = datetime.now(moscow_tz).time()
-        if not (time(21, 40) <= now <= time(22, 10)):
-            await message.answer(
-                "❌ Геолокация не сохранена. Отправлять геолокацию нужно только с 21:40 до 22:10."
-            )
-            logging.warning(
-                f"Пользователь {user.surname} ({user.telegram_id}) попытался отправить геопозицию вне времени."
-            )
-            return
-    else:
-        logging.info(f"Проверка времени пропущена для {user.telegram_id}")
-
-    # проверка, есть ли уже отметка пользователя
-    if await get_today_control_by_id(message.from_user.id):
+    except NotLiveLocation:
+        await message.answer("❌ Используйте кнопку 'Транслировать местоположение'.")
+        return
+    except LocationTimeOut:
+        await message.answer(
+            "❌ Геолокация не сохранена. Отправлять геолокацию нужно только с 21:40 до 22:10."
+        )
+        return
+    except LocationAlreadyExists:
         await message.answer(
             "❌ Вы уже отправляли геолокацию сегодня. Повторная отправка невозможна."
         )
-        logging.warning(
-            f"Пользователь {user.surname} ({user.telegram_id}) попытался отправить геолокацию повторно."
-        )
         return
-
-    # обработка новой локации
-    await add_today_control(
-        user.telegram_id,
-        message.location.latitude,
-        message.location.longitude,
-    )
-
-    dist = await haversine(
-        user.home_latitude,
-        user.home_longitude,
-        message.location.latitude,
-        message.location.longitude,
-    )
 
     if dist <= 250:
         logging.info(
@@ -122,7 +59,7 @@ async def control_location(message: Message, state: FSMContext) -> None:
         await message.answer("Вы находитесь дома. Отметка сохранена.")
     else:
         logging.info(
-            f"Пользователь {user.surname} ({user.telegram_id}) находится не дома. "
+            f"Пользователь {user.surname} ({user.telegram_id}) отправил геопозицию и находится не дома. "
             f"Расстояние: {dist:.2f} м. {message.location.latitude}, {message.location.longitude}"
         )
         await message.answer("Вы находитесь НЕ дома. Отметка сохранена.")
