@@ -1,12 +1,9 @@
 from math import sin, cos, asin, sqrt, radians
-
 from db.models import User
 from db.utils import get_today_control_by_id, add_today_control
-
 from datetime import datetime, time
 import pytz
 import logging
-
 from src.config import is_test_mode
 from src.exceptions import (
     ForwardedMessage,
@@ -14,7 +11,6 @@ from src.exceptions import (
     LocationTimeOut,
     LocationAlreadyExists,
 )
-
 from aiogram.types import Message
 
 
