@@ -50,9 +50,9 @@ async def set_commands(bot: Bot):
             command="ping_all", description="Отправить сообщение всем пользователям"
         ),
         BotCommand(command="ping", description="Понг"),
-        BotCommand(command="start_quest", description="Запустить опрос"),
-        BotCommand(command="quest", description="Посмотреть результаты опроса"),
-        BotCommand(command="clear_quest", description="Очистить результаты опроса"),
+        # BotCommand(command="start_quest", description="Запустить опрос"),
+        # BotCommand(command="quest", description="Посмотреть результаты опроса"),
+        # BotCommand(command="clear_quest", description="Очистить результаты опроса"),
         BotCommand(
             command="clear", description="Очистить отметки геолокации за сегодня"
         ),

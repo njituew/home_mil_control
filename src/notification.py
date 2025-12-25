@@ -55,27 +55,11 @@ async def send_daily_report(bot: Bot):
 async def send_questionnaire(bot: Bot):
     keyboard = InlineKeyboardMarkup(
         inline_keyboard=[
-            (
-                InlineKeyboardButton(
-                    text="✅ Я буду питаться", callback_data="questionnaire_feeding_yes"
-                ),
-            ),
-            (
-                InlineKeyboardButton(
-                    text="❌ Я не буду питаться",
-                    callback_data="questionnaire_feeding_no",
-                ),
-            ),
+            (InlineKeyboardButton(text="✅", callback_data="questionnaire_answer_1"),),
+            (InlineKeyboardButton(text="❌", callback_data="questionnaire_answer_2"),),
         ]
     )
-    text = (
-        f"Товарищи, напоминаю про новые правила котлового довольствия:\n"
-        f"Если на вас пишется рапорт, то вы записываетесь на все обеды по будним дням, "
-        f"и даже если не будете питаться в конктретный день - всё равно за него заплатите.\n"
-        f"В очередной раз провожу опрос, кто будет питаться в столовой ППД. "
-        f"Если вы согласны питаться в столовой ППД на таких условиях, проголосуйте ниже соответствующей кнопкой.\n"
-        f"В понедельник будет писаться рапорт, кто не успел будет писать его за себя самостоятельно."
-    )
+    text = f"text\n"
     users = await get_all_users()
     for user in users:
         try:

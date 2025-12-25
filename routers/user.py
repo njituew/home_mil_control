@@ -83,7 +83,7 @@ async def project_info(message: Message):
     await message.answer("GitHub:\nhttps://github.com/njituew/home_mil_control/")
 
 
-@router.callback_query(F.data.startswith("questionnaire_feeding_"))
+@router.callback_query(F.data.startswith("questionnaire_answer_"))
 async def questionnaire_response(data: CallbackQuery):
     """
     Обрабатывает ответ пользователя на опрос.
@@ -103,19 +103,7 @@ async def questionnaire_response(data: CallbackQuery):
         await data.answer()
         return
 
-    will_feed = data.data == "questionnaire_feeding_yes"
-    await add_user_questionnaire(user.telegram_id, user.surname, will_feed)
-    if will_feed:
-        logging.info(
-            f"Пользователь {user.surname} ({user.telegram_id}) ответил на опрос: будет питаться."
-        )
-        await data.message.answer("Вы записаны на питание.")
-    else:
-        logging.info(
-            f"Пользователь {user.surname} ({user.telegram_id}) ответил на опрос: не будет питаться."
-        )
-        await data.message.answer("Вы отказались от питания.")
-    await data.answer()
+    return  # deleted feature
 
 
 @router.message()
