@@ -6,6 +6,7 @@ from db.utils import (
     get_all_users,
     get_user_by_telegram_id,
     delete_user_by_telegram_id,
+    get_today_control_by_id,
     clear_today_control,
     add_alternative_location,
     delete_alternative_location,
@@ -136,6 +137,38 @@ async def show_control_report(message: Message):
         f"Админ {admin.surname} ({admin.telegram_id}) запросил отчёт по TodayControl."
     )
     await message.answer(report)
+
+
+@router.message(Command("where_is"))
+@admin_only
+async def where_is_user(message: Message):
+    try:
+        telegram_id = int(message.text.split()[1])
+    except ValueError:
+        await message.answer("Некорректные параметры. Проверьте формат чисел.")
+        return
+
+    admin = await get_user_by_telegram_id(message.from_user.id)
+    user = await get_user_by_telegram_id(telegram_id)
+    if not user:
+        logging.warning(
+            f"Админ {admin.surname} ({admin.telegram_id}) "
+            f"запросил локацию несуществующего пользователя {telegram_id}."
+        )
+        await message.answer(
+            f"❌ Пользователь с Telegram ID {telegram_id} не найден в базе."
+        )
+        return
+
+    logging.info(
+        f"Админ {admin.surname} ({admin.telegram_id}) запросил локацию "
+        f"пользователя {user.surname} ({user.telegram_id})."
+    )
+
+    control = await get_today_control_by_id(user.telegram_id)
+    answer_text = f"Пользователь {user.surname} отправил локацию"
+    answer_text += f"\n{control.latitude}, {control.longitude}"
+    await message.answer(answer_text)
 
 
 @router.message(Command("add_alt"))

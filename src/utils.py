@@ -31,6 +31,7 @@ async def set_commands(bot: Bot):
         BotCommand(
             command="control", description="Посмотреть текущие отметки геолокации"
         ),
+        BotCommand(command="where_is", description="Посмотреть последнюю локацию пользователя <telegram_id>"),
         BotCommand(
             command="add_alt",
             description="Добавление альтернативной локации для пользователя. <telegram_id> <latitude> <longitude> [комментарий]",
@@ -41,10 +42,10 @@ async def set_commands(bot: Bot):
         ),
         BotCommand(
             command="all_alt",
-            description="Показать все альтернативные локации.",
+            description="Показать все альтернативные локации",
         ),
         BotCommand(
-            command="del_alt", description="Удалить альтернативную локацию по ID."
+            command="del_alt", description="Удалить альтернативную локацию по ID"
         ),
         BotCommand(
             command="ping_all", description="Отправить сообщение всем пользователям"
