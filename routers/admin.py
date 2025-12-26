@@ -160,14 +160,15 @@ async def where_is_user(message: Message):
         )
         return
 
+    control = await get_today_control_by_id(user.telegram_id)
+    answer_text = f"Пользователь {user.surname} отправил локацию"
+    answer_text += f"\n{control.latitude}, {control.longitude}"
+    
     logging.info(
         f"Админ {admin.surname} ({admin.telegram_id}) запросил локацию "
         f"пользователя {user.surname} ({user.telegram_id})."
     )
-
-    control = await get_today_control_by_id(user.telegram_id)
-    answer_text = f"Пользователь {user.surname} отправил локацию"
-    answer_text += f"\n{control.latitude}, {control.longitude}"
+    
     await message.answer(answer_text)
 
 
