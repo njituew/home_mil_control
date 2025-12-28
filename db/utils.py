@@ -21,6 +21,12 @@ async def get_user_by_telegram_id(telegram_id: int):
         return result.scalar_one_or_none()
 
 
+async def get_users_by_surname(surname: str):
+    async with AsyncSessionLocal() as session:
+        result = await session.execute(select(User).where(User.surname == surname))
+        return result.scalars().all()
+
+
 async def add_user(telegram_id: int, surname: str, latitude: float, longitude: float):
     async with AsyncSessionLocal() as session:
         user = User(

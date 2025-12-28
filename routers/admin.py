@@ -5,6 +5,7 @@ from aiogram.filters import Command
 from db.utils import (
     get_all_users,
     get_user_by_telegram_id,
+    get_users_by_surname,
     delete_user_by_telegram_id,
     get_today_control_by_id,
     clear_today_control,
@@ -52,6 +53,7 @@ async def list_users(message: Message):
     Отправляет список зарегестрированных пользователей
     """
 
+    admin = await get_user_by_telegram_id(message.from_user.id)
     users = await get_all_users()
     if not users:
         await message.answer("Нет зарегистрированных пользователей.")
@@ -67,10 +69,60 @@ async def list_users(message: Message):
             f"Telegram ID: {user.telegram_id}, "
             f"Домашний адрес: {user.home_latitude}, {user.home_longitude}\n"
         )
-    admin = await get_user_by_telegram_id(message.from_user.id)
+
     logging.info(
         f"Админ {admin.surname} ({admin.telegram_id}) запросил список пользователей."
     )
+
+    await message.answer(text)
+
+
+@router.message(Command("user"))
+@admin_only
+async def user_info(message: Message):
+    """
+    Отправляет информацию о пользователе по фамилии или telegram id
+    """
+
+    args = message.text.split()
+    if len(args) != 2:
+        await message.answer(
+            "Отправьте команду в формате\n/user Фамилия\nили\n/user TelegramID"
+        )
+        return
+
+    admin = await get_user_by_telegram_id(message.from_user.id)
+
+    if args[1].isdigit():
+        users = [await get_user_by_telegram_id(int(args[1]))]
+        if not users[0]:
+            await message.answer(
+                "Нет зарегистрированных пользователей с таким TelegramID."
+            )
+            return
+    else:
+        users = await get_users_by_surname(args[1])
+        if not users:
+            await message.answer(
+                "Нет зарегистрированных пользователей с такой фамилией."
+            )
+            return
+
+    text = ""
+    counter = 0
+    for user in users:
+        counter += 1
+        text += (
+            f"{counter}. "
+            f"Фамилия: {user.surname}, "
+            f"Telegram ID: {user.telegram_id}, "
+            f"Домашний адрес: {user.home_latitude}, {user.home_longitude}\n"
+        )
+
+    logging.info(
+        f"Админ {admin.surname} ({admin.telegram_id}) запросил информацию по пользователю {args[1]}."
+    )
+
     await message.answer(text)
 
 
@@ -100,10 +152,12 @@ async def delete_user(message: Message):
         return
 
     await delete_user_by_telegram_id(deleted_user.telegram_id)
+
     logging.info(
         f"Админ {admin.surname} ({admin.telegram_id}) "
         f"удалил пользователя {deleted_user.surname} ({deleted_user.telegram_id})."
     )
+
     await message.answer(
         f"🗑️ Пользователь {deleted_user.surname} ({deleted_user.telegram_id}) удалён."
     )
@@ -163,12 +217,12 @@ async def where_is_user(message: Message):
     control = await get_today_control_by_id(user.telegram_id)
     answer_text = f"Пользователь {user.surname} отправил локацию"
     answer_text += f"\n{control.latitude}, {control.longitude}"
-    
+
     logging.info(
         f"Админ {admin.surname} ({admin.telegram_id}) запросил локацию "
         f"пользователя {user.surname} ({user.telegram_id})."
     )
-    
+
     await message.answer(answer_text)
 
 
