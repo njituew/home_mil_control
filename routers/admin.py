@@ -19,35 +19,17 @@ from db.utils import (
 from src.notification import send_questionnaire
 from src.utils import is_admin
 from src.reports import generate_report, generate_report_quest
+from src.middleware import AdminCheckMiddleware
 
 import logging
-from functools import wraps
 
 
 router = Router()
 
-
-def admin_only(func):
-    @wraps(func)
-    async def wrapper(message: Message, *args, **kwargs):
-        user = await get_user_by_telegram_id(message.from_user.id)
-        if not user:
-            await message.answer("Вы не зарегистрированы.")
-            return
-        if not await is_admin(message.from_user.id):
-            await message.answer("У вас нет прав для этой команды.")
-            logging.warning(
-                f"Пользователь {user.surname} "
-                f"({message.from_user.id}) пытался использовать админскую команду."
-            )
-            return
-        return await func(message, *args, **kwargs)
-
-    return wrapper
+router.middleware(AdminCheckMiddleware())
 
 
 @router.message(Command("users"))
-@admin_only
 async def list_users(message: Message):
     """
     Отправляет список зарегестрированных пользователей
@@ -78,7 +60,6 @@ async def list_users(message: Message):
 
 
 @router.message(Command("user"))
-@admin_only
 async def user_info(message: Message):
     """
     Отправляет информацию о пользователе по фамилии или telegram id
@@ -127,7 +108,6 @@ async def user_info(message: Message):
 
 
 @router.message(Command("delete"))
-@admin_only
 async def delete_user(message: Message):
     """
     Удаляет пользователя по telegram id
@@ -164,7 +144,6 @@ async def delete_user(message: Message):
 
 
 @router.message(Command("clear"))
-@admin_only
 async def clear_control(message: Message):
     """
     Очищает таблицу с ежедневными отметками локаций пользователей
@@ -179,7 +158,6 @@ async def clear_control(message: Message):
 
 
 @router.message(Command("control"))
-@admin_only
 async def show_control_report(message: Message):
     """
     Отправляет отчёт по локациям
@@ -194,7 +172,6 @@ async def show_control_report(message: Message):
 
 
 @router.message(Command("where_is"))
-@admin_only
 async def where_is_user(message: Message):
     try:
         telegram_id = int(message.text.split()[1])
@@ -227,7 +204,6 @@ async def where_is_user(message: Message):
 
 
 @router.message(Command("add_alt"))
-@admin_only
 async def add_alt_location(message: Message):
     """
     Добавляет альтернативную локацию для пользователя
@@ -273,7 +249,6 @@ async def add_alt_location(message: Message):
 
 
 @router.message(Command("user_alt"))
-@admin_only
 async def list_alt_locations(message: Message):
     """
     Отправляет альтернативные локации пользователя
@@ -308,7 +283,6 @@ async def list_alt_locations(message: Message):
 
 
 @router.message(Command("all_alt"))
-@admin_only
 async def list_all_alt_locations(message: Message):
     """
     Отправляет все существующие альтернативные локации
@@ -350,7 +324,6 @@ async def list_all_alt_locations(message: Message):
 
 
 @router.message(Command("del_alt"))
-@admin_only
 async def delete_alt_location_cmd(message: Message):
     """
     Удаляет альтернативную локацию по ID локации
@@ -373,7 +346,6 @@ async def delete_alt_location_cmd(message: Message):
 
 
 @router.message(Command("ping_all"))
-@admin_only
 async def ping_all(message: Message):
     """
     Отправляет сообщение всем пользователям
@@ -404,7 +376,6 @@ async def ping_all(message: Message):
 
 
 @router.message(Command("start_quest"))
-@admin_only
 async def start_questionnaire(message: Message):
     """
     Отправляет сообщение с опросом
@@ -418,7 +389,6 @@ async def start_questionnaire(message: Message):
 
 
 @router.message(Command("quest"))
-@admin_only
 async def questionnaire(message: Message):
     """
     Отправляет результаты опроса
@@ -433,7 +403,6 @@ async def questionnaire(message: Message):
 
 
 @router.message(Command("clear_quest"))
-@admin_only
 async def clear_quest(message: Message):
     """
     Очищает результаты опроса
