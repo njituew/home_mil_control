@@ -70,6 +70,8 @@ async def ping(message: Message):
     """
     Проверка пульса.
     """
+    user = await get_user_by_telegram_id(message.from_user.id)
+    logging.info(f"Пользователь {user.surname} ({user.telegram_id}) использовал /ping.")
     await message.answer("понг")
 
 
