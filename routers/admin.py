@@ -335,7 +335,10 @@ async def list_all_alt_locations(message: Message):
     for user_id in locations_by_user:
         user = await get_user_by_telegram_id(user_id)
         user_counter += 1
-        text += f"{user_counter}. {user.surname} ({user.telegram_id}):\n"
+        if user:
+            text += f"{user_counter}. {user.surname} ({user_id}):\n"
+        else:
+            text += f"{user_counter}. [удалённый пользователь] ({user_id}):\n"
         loc_counter = 0
         for loc in locations_by_user.get(user_id):
             loc_counter += 1
