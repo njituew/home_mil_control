@@ -53,14 +53,14 @@ async def process_location(user: User, message: Message) -> float:
             raise LocationTimeOut
     else:
         logging.info(f"Проверка пропущена для {user.telegram_id}")
-    
+
     # проверка, есть ли уже отметка пользователя
     if await get_today_control_by_id(message.from_user.id):
         logging.warning(
             f"Пользователь {user.surname} ({user.telegram_id}) попытался отправить геолокацию повторно."
         )
         raise LocationAlreadyExists
-    
+
     # обработка новой локации
     await add_today_control(
         user.telegram_id,
@@ -74,5 +74,5 @@ async def process_location(user: User, message: Message) -> float:
         message.location.latitude,
         message.location.longitude,
     )
-    
+
     return dist
