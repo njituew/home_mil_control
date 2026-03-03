@@ -1,6 +1,6 @@
 from math import sin, cos, asin, sqrt, radians
 from db.models import User
-from db.utils import get_today_control_by_id, add_today_control
+from db.utils import get_today_control_by_id
 from datetime import datetime, time
 import pytz
 import logging
