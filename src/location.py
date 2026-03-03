@@ -27,7 +27,15 @@ async def haversine(lat1: float, lon1: float, lat2: float, lon2: float) -> float
     return R * c
 
 
-async def process_location(user: User, message: Message) -> float:
+async def validate_location(user: User, message: Message) -> None:
+    """Проверка локации на валидность
+
+    Raises:
+        ForwardedMessage: сообщение переслано (не допускается)
+        NotLiveLocation: отправлена не трансляция геопозиции, а точка на карте
+        LocationTimeOut: сообщение отправлено не в отведённое время
+        LocationAlreadyExists: пользователь уже отправлял локацию сегодня
+    """
     if not is_test_mode():
         # проверка, что сообщение не пересланное
         if message.forward_from or message.forward_from_chat:
@@ -36,7 +44,7 @@ async def process_location(user: User, message: Message) -> float:
             )
             raise ForwardedMessage
 
-        # проверка, что отправлена именно текущая геопозиция
+        # проверка, что отправлена трансляция геопозиции
         if not getattr(message.location, "live_period", None):
             logging.warning(
                 f"Пользователь {user.surname} ({user.telegram_id}) попытался отправить точку на карте."
@@ -60,19 +68,3 @@ async def process_location(user: User, message: Message) -> float:
             f"Пользователь {user.surname} ({user.telegram_id}) попытался отправить геолокацию повторно."
         )
         raise LocationAlreadyExists
-
-    # обработка новой локации
-    await add_today_control(
-        user.telegram_id,
-        message.location.latitude,
-        message.location.longitude,
-    )
-
-    dist = await haversine(
-        user.home_latitude,
-        user.home_longitude,
-        message.location.latitude,
-        message.location.longitude,
-    )
-
-    return dist

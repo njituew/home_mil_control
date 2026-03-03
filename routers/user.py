@@ -1,13 +1,15 @@
 from aiogram import Router, F
-from aiogram.types import Message, CallbackQuery
+from aiogram.types import Message
 from aiogram.fsm.context import FSMContext
 from aiogram.filters import Command
 from db.utils import (
     get_user_by_telegram_id,
-    add_user_questionnaire,
-    get_questionnaire_by_id,
+    add_today_control,
+    # deleted feature
+    # add_user_questionnaire,
+    # get_questionnaire_by_id,
 )
-from src.location import process_location
+from src.location import haversine, validate_location
 from src.exceptions import (
     ForwardedMessage,
     NotLiveLocation,
@@ -32,7 +34,7 @@ async def control_location(message: Message, state: FSMContext) -> None:
     user = await get_user_by_telegram_id(message.from_user.id)
 
     try:
-        dist = await process_location(user, message)
+        await validate_location(user, message)
     except ForwardedMessage:
         await message.answer(
             "❌ Самый хитрый? Отправь новую геолокацию, а не пересланное сообщение."
@@ -51,6 +53,19 @@ async def control_location(message: Message, state: FSMContext) -> None:
             "❌ Вы уже отправляли геолокацию сегодня. Повторная отправка невозможна."
         )
         return
+
+    await add_today_control(
+        user.telegram_id,
+        message.location.latitude,
+        message.location.longitude,
+    )
+
+    dist = await haversine(
+        user.home_latitude,
+        user.home_longitude,
+        message.location.latitude,
+        message.location.longitude,
+    )
 
     if dist <= 250:
         logging.info(
@@ -85,27 +100,28 @@ async def project_info(message: Message):
     await message.answer("GitHub:\nhttps://github.com/njituew/home_mil_control/")
 
 
-@router.callback_query(F.data.startswith("questionnaire_answer_"))
-async def questionnaire_response(data: CallbackQuery):
-    """
-    Обрабатывает ответ пользователя на опрос.
-    Проверяет, не отвечал ли пользователь ранее на опрос. Если ответ уже был дан,
-    уведомляет пользователя об этом. В противном случае сохраняет выбранный вариант
-    в базу.
-    """
+# deleted feature
+# @router.callback_query(F.data.startswith("questionnaire_answer_"))
+# async def questionnaire_response(data: CallbackQuery):
+#     """
+#     Обрабатывает ответ пользователя на опрос.
+#     Проверяет, не отвечал ли пользователь ранее на опрос. Если ответ уже был дан,
+#     уведомляет пользователя об этом. В противном случае сохраняет выбранный вариант
+#     в базу.
+#     """
 
-    user = await get_user_by_telegram_id(data.from_user.id)
+#     user = await get_user_by_telegram_id(data.from_user.id)
 
-    # проверка на повторную попытку ответа
-    if await get_questionnaire_by_id(user.telegram_id):
-        logging.warning(
-            f"Пользователь {user.surname} ({user.telegram_id}) попытался ответить на опрос повторно."
-        )
-        await data.message.answer("Вы уже ответили на опрос.")
-        await data.answer()
-        return
+#     # проверка на повторную попытку ответа
+#     if await get_questionnaire_by_id(user.telegram_id):
+#         logging.warning(
+#             f"Пользователь {user.surname} ({user.telegram_id}) попытался ответить на опрос повторно."
+#         )
+#         await data.message.answer("Вы уже ответили на опрос.")
+#         await data.answer()
+#         return
 
-    return  # deleted feature
+#     return
 
 
 @router.message()
