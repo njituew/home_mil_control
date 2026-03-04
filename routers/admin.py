@@ -433,7 +433,11 @@ async def list_admins(message: Message):
                 f"Telegram ID: {a.telegram_id}\n"
             )
         else:
-            text += f"{counter}. Фамилия: {user_admin.surname}\n"
+            text += (
+                f"{counter}. "
+                f"Фамилия: {user_admin.surname}, "
+                f"Telegram ID: {user_admin.telegram_id}\n"
+            )
 
     logging.info(
         f"Админ {admin.surname} ({admin.telegram_id}) запросил список администраторов."
