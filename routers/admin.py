@@ -7,6 +7,10 @@ from db.utils import (
     get_user_by_telegram_id,
     get_users_by_surname,
     delete_user_by_telegram_id,
+    is_admin,
+    get_all_admins,
+    add_admin,
+    delete_admin_by_telegram_id,
     get_today_control_by_id,
     clear_today_control,
     add_alternative_location,
@@ -407,6 +411,111 @@ async def ping_all(message: Message):
         f"Админ {admin.surname} ({admin.telegram_id}) отправил массовое сообщение '{text}' {count} пользователям."
     )
     await message.answer(f"Сообщение отправлено {count} пользователям.")
+
+
+@router.message(Command("admins"))
+@admin_only
+async def list_admins(message: Message):
+    """
+    Отправляет список администраторов
+    """
+    admin = await get_user_by_telegram_id(message.from_user.id)
+    admins = await get_all_admins()
+
+    text = "Администраторы:\n"
+    counter = 0
+    for a in admins:
+        counter += 1
+
+        user_admin = await get_user_by_telegram_id(a.telegram_id)
+        if not user_admin:
+            text += (
+                f"{counter}. "
+                f"Незарегестрированный админ. "
+                f"Telegram ID: {a.telegram_id}\n"
+            )
+        else:
+            text += f"{counter}. Фамилия: {user_admin.surname}\n"
+
+    logging.info(
+        f"Админ {admin.surname} ({admin.telegram_id}) запросил список администраторов."
+    )
+
+    await message.answer(text)
+
+
+@router.message(Command("add_admin"))
+@admin_only
+async def add_admin_cmd(message: Message):
+    """
+    Добавляет администратора по telegram id
+    """
+
+    args = message.text.split()
+    if len(args) != 2 or not args[1].isdigit():
+        await message.answer("Используйте команду в формате: /add_admin <telegram_id>")
+        return
+
+    admin = await get_user_by_telegram_id(message.from_user.id)
+    new_admin_id = int(args[1])
+
+    if await is_admin(new_admin_id):
+        logging.warning(
+            f"Админ {admin.surname} ({admin.telegram_id}) попытался добавить "
+            f"админа {new_admin_id}, который уже является админом."
+        )
+        await message.answer(
+            f"Пользователь с Telegram ID {new_admin_id} уже является администратором."
+        )
+        return
+
+    await add_admin(new_admin_id)
+
+    logging.info(
+        f"Админ {admin.surname} ({admin.telegram_id}) "
+        f"добавил нового администратора {new_admin_id}."
+    )
+
+    await message.answer(f"✅ Пользователь {new_admin_id} теперь администратор.")
+
+
+@router.message(Command("delete_admin"))
+@admin_only
+async def delete_admin_cmd(message: Message):
+    """
+    Удаляет администратора по telegram id
+    """
+
+    args = message.text.split()
+    if len(args) != 2 or not args[1].isdigit():
+        await message.answer(
+            "Используйте команду в формате: /delete_admin <telegram_id>"
+        )
+        return
+
+    admin = await get_user_by_telegram_id(message.from_user.id)
+    deleted_admin_id = int(args[1])
+
+    if not await is_admin(deleted_admin_id):
+        logging.warning(
+            f"Админ {admin.surname} ({admin.telegram_id}) попытался удалить "
+            f"админа {deleted_admin_id}, который не является админом."
+        )
+        await message.answer(
+            f"Пользователь с Telegram ID {deleted_admin_id} не является администратором."
+        )
+        return
+
+    await delete_admin_by_telegram_id(deleted_admin_id)
+
+    logging.info(
+        f"Админ {admin.surname} ({admin.telegram_id}) "
+        f"удалил администратора {deleted_admin_id}."
+    )
+
+    await message.answer(
+        f"✅ Пользователь {deleted_admin_id} удалён из администраторов."
+    )
 
 
 # deleted feature
