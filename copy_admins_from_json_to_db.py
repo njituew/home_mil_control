@@ -34,6 +34,16 @@ async def copy_admins_from_json_to_db(json_file_path: str, overwrite: bool = Fal
     print(f"\nГотово. Добавлено: {added}, пропущено: {skipped}.")
 
 
+async def delete_all_admins():
+    await init_db()
+
+    existing_admins = await get_all_admins()
+    for admin in existing_admins:
+        await delete_admin_by_telegram_id(admin.telegram_id)
+
+    print(f"Удалено {len(existing_admins)} администраторов.")
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Копирование админов из JSON в БД")
     parser.add_argument(
@@ -41,6 +51,14 @@ if __name__ == "__main__":
         action="store_true",
         help="Удалить всех существующих админов и записать заново",
     )
+    parser.add_argument(
+        "--delete",
+        action="store_true",
+        help="Удалить всех администраторов из таблицы",
+    )
     args = parser.parse_args()
 
-    asyncio.run(copy_admins_from_json_to_db("admins.json", overwrite=args.overwrite))
+    if args.delete:
+        asyncio.run(delete_all_admins())
+    else:
+        asyncio.run(copy_admins_from_json_to_db("admins.json", overwrite=args.overwrite))

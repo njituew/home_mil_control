@@ -7,6 +7,7 @@ from routers.admin import register_admin_handlers
 
 from db.database import init_db
 from src.config import get_bot_token, init_logging
+from src.middleware import RegistrationCheckMiddleware, AdminCheckMiddleware
 from src.scheduler import init_scheduler
 from src.utils import set_commands
 
@@ -17,8 +18,11 @@ async def create_bot():
     await init_db()
 
     dp = Dispatcher(storage=MemoryStorage())
+    dp.message.middleware(RegistrationCheckMiddleware())
+    dp.callback_query.middleware(RegistrationCheckMiddleware())
+
     register_registration_handlers(dp)
-    register_admin_handlers(dp)
+    register_admin_handlers(dp, AdminCheckMiddleware())
     register_user_handlers(dp)
 
     scheduler = init_scheduler(bot)

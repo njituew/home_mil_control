@@ -17,12 +17,9 @@ from src.exceptions import (
     LocationAlreadyExists,
 )
 import logging
-from src.middleware import RegistrationCheckMiddleware
 
 
 router = Router()
-router.message.middleware(RegistrationCheckMiddleware())
-router.callback_query.middleware(RegistrationCheckMiddleware())
 
 
 @router.message(F.location)
@@ -144,10 +141,8 @@ async def another_message(message: Message):
     else:
         content = "Неизвестный тип сообщения"
 
-    logging.info(
-        f"Необработанное сообщение от {user.surname} "
-        f"({user.telegram_id}): {content}"
-    )
+    user_label = f"{user.surname} ({user.telegram_id})" if user else str(message.from_user.id)
+    logging.info(f"Необработанное сообщение от {user_label}: {content}")
 
     await message.answer("🪖")
 
