@@ -13,15 +13,18 @@ from db.utils import (
     delete_alternative_location,
     get_alternative_locations,
     get_all_alternative_locations,
-    clear_questionnaire,
+    # clear_questionnaire,
 )
 
-from src.notification import send_questionnaire
 from src.utils import is_admin
-from src.reports import generate_report, generate_report_quest
+from src.reports import generate_report
 
 import logging
 from functools import wraps
+
+# deleted feature
+# from src.notification import send_questionnaire
+# from src.reports import generate_report_quest
 
 
 router = Router()
@@ -406,11 +409,7 @@ async def ping_all(message: Message):
     await message.answer(f"Сообщение отправлено {count} пользователям.")
 
 
-def register_admin_handlers(dp):
-    dp.include_router(router)
-
-
-# Deleted feature
+# deleted feature
 # @router.message(Command("start_quest"))
 # @admin_only
 # async def start_questionnaire(message: Message):
@@ -453,3 +452,7 @@ def register_admin_handlers(dp):
 #         f"Админ {admin.surname} ({admin.telegram_id}) очистил таблицу Questionnaire."
 #     )
 #     await message.answer("Таблица Questionnaire успешно очищена.")
+
+
+def register_admin_handlers(dp):
+    dp.include_router(router)

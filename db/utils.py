@@ -143,36 +143,36 @@ async def get_all_alternative_locations():
         return result.scalars().all()
 
 
-# Questionnaire
-async def add_user_questionnaire(
-    telegram_id: int, surname: str, will_feed: bool = False
-):
-    async with AsyncSessionLocal() as session:
-        user = Questionnaire(
-            telegram_id=telegram_id,
-            surname=surname,
-            will_feed=will_feed,
-        )
-        session.add(user)
-        await session.commit()
+# Questionnaire (deleted feature)
+# async def add_user_questionnaire(
+#     telegram_id: int, surname: str, will_feed: bool = False
+# ):
+#     async with AsyncSessionLocal() as session:
+#         user = Questionnaire(
+#             telegram_id=telegram_id,
+#             surname=surname,
+#             will_feed=will_feed,
+#         )
+#         session.add(user)
+#         await session.commit()
 
 
-async def get_all_questionnaire():
-    async with AsyncSessionLocal() as session:
-        result = await session.execute(select(Questionnaire))
-        return result.scalars().all()
+# async def get_all_questionnaire():
+#     async with AsyncSessionLocal() as session:
+#         result = await session.execute(select(Questionnaire))
+#         return result.scalars().all()
 
 
-async def get_questionnaire_by_id(telegram_id: int):
-    async with AsyncSessionLocal() as session:
-        result = await session.execute(
-            select(Questionnaire).where(Questionnaire.telegram_id == telegram_id)
-        )
-        return result.scalar_one_or_none()
+# async def get_questionnaire_by_id(telegram_id: int):
+#     async with AsyncSessionLocal() as session:
+#         result = await session.execute(
+#             select(Questionnaire).where(Questionnaire.telegram_id == telegram_id)
+#         )
+#         return result.scalar_one_or_none()
 
 
-async def clear_questionnaire():
-    async with AsyncSessionLocal() as session:
-        await session.execute(delete(Questionnaire))
-        await session.commit()
-        logging.info("All data cleared from Questionnaire table.")
+# async def clear_questionnaire():
+#     async with AsyncSessionLocal() as session:
+#         await session.execute(delete(Questionnaire))
+#         await session.commit()
+#         logging.info("All data cleared from Questionnaire table.")

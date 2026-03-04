@@ -2,7 +2,7 @@ from db.utils import (
     get_all_users,
     get_all_controls,
     get_alternative_locations,
-    get_all_questionnaire,
+    # get_all_questionnaire,
 )
 from src.location import haversine
 
@@ -61,25 +61,26 @@ async def generate_report() -> str:
     return text
 
 
-async def generate_report_quest() -> str:
-    users = await get_all_users()
+# deleted feature
+# async def generate_report_quest() -> str:
+#     users = await get_all_users()
 
-    questionnaires = await get_all_questionnaire()
-    questionnaires_by_id = {q.telegram_id: q for q in questionnaires}
+#     questionnaires = await get_all_questionnaire()
+#     questionnaires_by_id = {q.telegram_id: q for q in questionnaires}
 
-    will_feed_users = [
-        f"{user.surname} {'✅' if questionnaires_by_id[user.telegram_id].will_feed else '❌'}"
-        for user in users
-        if user.telegram_id in questionnaires_by_id
-    ]
+#     will_feed_users = [
+#         f"{user.surname} {'✅' if questionnaires_by_id[user.telegram_id].will_feed else '❌'}"
+#         for user in users
+#         if user.telegram_id in questionnaires_by_id
+#     ]
 
-    not_answered = [
-        user.surname for user in users if user.telegram_id not in questionnaires_by_id
-    ]
+#     not_answered = [
+#         user.surname for user in users if user.telegram_id not in questionnaires_by_id
+#     ]
 
-    text = "Отчёт по опросу:\n"
-    text += "\nРезультаты опроса:\n"
-    text += "\n".join(will_feed_users) if will_feed_users else "Никто не прошёл опрос"
-    text += "\n\nНе прошли опрос:\n"
-    text += "\n".join(not_answered) if not_answered else "Все отметились"
-    return text
+#     text = "Отчёт по опросу:\n"
+#     text += "\nРезультаты опроса:\n"
+#     text += "\n".join(will_feed_users) if will_feed_users else "Никто не прошёл опрос"
+#     text += "\n\nНе прошли опрос:\n"
+#     text += "\n".join(not_answered) if not_answered else "Все отметились"
+#     return text
