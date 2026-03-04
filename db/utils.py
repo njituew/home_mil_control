@@ -1,5 +1,5 @@
 from sqlalchemy import select, delete
-from db.models import User, TodayControl, AlternativeLocation, Questionnaire
+from db.models import User, Admins, TodayControl, AlternativeLocation, Questionnaire
 from db.database import AsyncSessionLocal
 import logging
 
@@ -46,6 +46,39 @@ async def get_all_users():
 
 
 async def delete_user_by_telegram_id(telegram_id: int):
+    async with AsyncSessionLocal() as session:
+        result = await session.execute(
+            select(User).where(User.telegram_id == telegram_id)
+        )
+        user = result.scalar_one_or_none()
+        if user:
+            await session.delete(user)
+            await session.commit()
+
+
+# Admins
+async def is_admin(telegram_id: int) -> bool:
+    async with AsyncSessionLocal() as session:
+        result = await session.execute(
+            select(Admins).where(Admins.telegram_id == telegram_id)
+        )
+        return result.scalar_one_or_none() is not None
+
+
+async def add_admin(telegram_id: int):
+    async with AsyncSessionLocal() as session:
+        admin = Admins(telegram_id=telegram_id)
+        session.add(admin)
+        await session.commit()
+
+
+async def get_all_admins():
+    async with AsyncSessionLocal() as session:
+        result = await session.execute(select(Admins))
+        return result.scalars().all()
+
+
+async def delete_admin_by_telegram_id(telegram_id: int):
     async with AsyncSessionLocal() as session:
         result = await session.execute(
             select(User).where(User.telegram_id == telegram_id)

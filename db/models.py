@@ -12,6 +12,12 @@ class User(Base):
     home_longitude = Column(Float)
 
 
+class Admins(Base):
+    __tablename__ = "admins"
+    id = Column(Integer, primary_key=True, index=True)
+    telegram_id = Column(Integer, unique=True, index=True)
+
+
 class TodayControl(Base):
     __tablename__ = "today_control"
     id = Column(Integer, primary_key=True, index=True)
