@@ -12,7 +12,7 @@ class User(Base):
     home_longitude = Column(Float)
 
 
-class Admins(Base):
+class Admin(Base):
     __tablename__ = "admins"
     id = Column(Integer, primary_key=True, index=True)
     telegram_id = Column(Integer, unique=True, index=True)
