@@ -406,49 +406,50 @@ async def ping_all(message: Message):
     await message.answer(f"Сообщение отправлено {count} пользователям.")
 
 
-@router.message(Command("start_quest"))
-@admin_only
-async def start_questionnaire(message: Message):
-    """
-    Отправляет сообщение с опросом
-    """
-
-    await send_questionnaire(message.bot)
-    admin = await get_user_by_telegram_id(message.from_user.id)
-    logging.info(
-        f"Админ {admin.surname} ({admin.telegram_id}) запустил опрос по питанию."
-    )
-
-
-@router.message(Command("quest"))
-@admin_only
-async def questionnaire(message: Message):
-    """
-    Отправляет результаты опроса
-    """
-
-    report = await generate_report_quest()
-    admin = await get_user_by_telegram_id(message.from_user.id)
-    logging.info(
-        f"Админ {admin.surname} ({admin.telegram_id}) запросил отчёт по опросу."
-    )
-    await message.answer(report)
-
-
-@router.message(Command("clear_quest"))
-@admin_only
-async def clear_quest(message: Message):
-    """
-    Очищает результаты опроса
-    """
-
-    await clear_questionnaire()
-    admin = await get_user_by_telegram_id(message.from_user.id)
-    logging.info(
-        f"Админ {admin.surname} ({admin.telegram_id}) очистил таблицу Questionnaire."
-    )
-    await message.answer("Таблица Questionnaire успешно очищена.")
-
-
 def register_admin_handlers(dp):
     dp.include_router(router)
+
+
+# Deleted feature
+# @router.message(Command("start_quest"))
+# @admin_only
+# async def start_questionnaire(message: Message):
+#     """
+#     Отправляет сообщение с опросом
+#     """
+
+#     await send_questionnaire(message.bot)
+#     admin = await get_user_by_telegram_id(message.from_user.id)
+#     logging.info(
+#         f"Админ {admin.surname} ({admin.telegram_id}) запустил опрос по питанию."
+#     )
+
+
+# @router.message(Command("quest"))
+# @admin_only
+# async def questionnaire(message: Message):
+#     """
+#     Отправляет результаты опроса
+#     """
+
+#     report = await generate_report_quest()
+#     admin = await get_user_by_telegram_id(message.from_user.id)
+#     logging.info(
+#         f"Админ {admin.surname} ({admin.telegram_id}) запросил отчёт по опросу."
+#     )
+#     await message.answer(report)
+
+
+# @router.message(Command("clear_quest"))
+# @admin_only
+# async def clear_quest(message: Message):
+#     """
+#     Очищает результаты опроса
+#     """
+
+#     await clear_questionnaire()
+#     admin = await get_user_by_telegram_id(message.from_user.id)
+#     logging.info(
+#         f"Админ {admin.surname} ({admin.telegram_id}) очистил таблицу Questionnaire."
+#     )
+#     await message.answer("Таблица Questionnaire успешно очищена.")

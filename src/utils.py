@@ -54,13 +54,14 @@ async def set_commands(bot: Bot):
             command="ping_all", description="Отправить сообщение всем пользователям"
         ),
         BotCommand(command="ping", description="Понг"),
-        # BotCommand(command="start_quest", description="Запустить опрос"),
-        # BotCommand(command="quest", description="Посмотреть результаты опроса"),
-        # BotCommand(command="clear_quest", description="Очистить результаты опроса"),
         BotCommand(
             command="clear", description="Очистить отметки геолокации за сегодня"
         ),
         BotCommand(command="info", description="Откуда ноги растут"),
+        # Deleted feature
+        # BotCommand(command="start_quest", description="Запустить опрос"),
+        # BotCommand(command="quest", description="Посмотреть результаты опроса"),
+        # BotCommand(command="clear_quest", description="Очистить результаты опроса"),
     ]
     try:
         admins = await get_admin_ids()
