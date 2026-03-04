@@ -1,18 +1,8 @@
 from aiogram import Bot
 from aiogram.types import BotCommand, BotCommandScopeChat
-import json
 import logging
 
-
-async def get_admin_ids():
-    with open("admins.json", "r", encoding="utf-8") as f:
-        data = json.load(f)
-        return [admin["chat_id"] for admin in data["admins"]]
-
-
-async def is_admin(telegram_id: int) -> bool:
-    admin_ids = await get_admin_ids()
-    return telegram_id in admin_ids
+from db.utils import get_admin_ids
 
 
 async def set_commands(bot: Bot):

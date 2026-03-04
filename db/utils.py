@@ -72,6 +72,13 @@ async def add_admin(telegram_id: int):
         await session.commit()
 
 
+async def get_admin_ids() -> list[int]:
+    async with AsyncSessionLocal() as session:
+        result = await session.execute(select(Admin))
+        admins = result.scalars().all()
+        return [admin.telegram_id for admin in admins]
+
+
 async def get_all_admins():
     async with AsyncSessionLocal() as session:
         result = await session.execute(select(Admin))

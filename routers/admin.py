@@ -19,8 +19,6 @@ from db.utils import (
     get_all_alternative_locations,
     # clear_questionnaire,
 )
-
-from src.utils import is_admin
 from src.reports import generate_report
 
 import logging
