@@ -17,15 +17,10 @@ from db.utils import (
     delete_alternative_location,
     get_alternative_locations,
     get_all_alternative_locations,
-    # clear_questionnaire,
 )
 from src.reports import generate_report
 
 import logging
-
-# deleted feature
-# from src.notification import send_questionnaire
-# from src.reports import generate_report_quest
 
 
 router = Router()
@@ -34,7 +29,7 @@ router = Router()
 @router.message(Command("users"))
 async def list_users(message: Message):
     """
-    Отправляет список зарегестрированных пользователей
+    Отправляет список зарегистрированных пользователей
     """
 
     admin = await get_user_by_telegram_id(message.from_user.id)
@@ -126,7 +121,7 @@ async def delete_user(message: Message):
     if not deleted_user:
         logging.warning(
             f"Админ {admin.surname} ({admin.telegram_id}) "
-            f"попытался удалилить несуществующего пользователя с Telegram ID {args[1]}."
+            f"попытался удалить несуществующего пользователя с Telegram ID {args[1]}."
         )
         await message.answer(
             f"❌ Пользователь с Telegram ID {args[1]} не найден в базе."
@@ -175,14 +170,15 @@ async def show_control_report(message: Message):
 
 @router.message(Command("where_is"))
 async def where_is_user(message: Message):
-    try:
-        telegram_id = int(message.text.split()[1])
-    except ValueError:
-        await message.answer("Некорректные параметры. Проверьте формат чисел.")
+    args = message.text.split()
+    if len(args) != 2 or not args[1].isdigit():
+        await message.answer("Используйте формат: /where_is <telegram_id>")
         return
 
+    telegram_id = int(args[1])
     admin = await get_user_by_telegram_id(message.from_user.id)
     user = await get_user_by_telegram_id(telegram_id)
+
     if not user:
         logging.warning(
             f"Админ {admin.surname} ({admin.telegram_id}) "
@@ -194,15 +190,20 @@ async def where_is_user(message: Message):
         return
 
     control = await get_today_control_by_id(user.telegram_id)
-    answer_text = f"Пользователь {user.surname} отправил локацию"
-    answer_text += f"\n{control.latitude}, {control.longitude}"
+    if not control:
+        await message.answer(
+            f"❌ Пользователь {user.surname} ещё не отправил локацию сегодня."
+        )
+        return
 
     logging.info(
         f"Админ {admin.surname} ({admin.telegram_id}) запросил локацию "
         f"пользователя {user.surname} ({user.telegram_id})."
     )
 
-    await message.answer(answer_text)
+    await message.answer(
+        f"Пользователь {user.surname} отправил локацию\n{control.latitude}, {control.longitude}"
+    )
 
 
 @router.message(Command("add_alt"))
@@ -257,7 +258,7 @@ async def list_alt_locations(message: Message):
     """
 
     args = message.text.split()
-    if len(args) != 2:
+    if len(args) != 2 or not args[1].isdigit():
         await message.answer("Используйте формат: /user_alt <telegram_id>")
         return
 
@@ -301,23 +302,25 @@ async def list_all_alt_locations(message: Message):
         await message.answer("В базе нет альтернативных локаций.")
         return
 
-    locations_by_user = dict()
+    # группируем локации по пользователям в памяти
+    locations_by_user: dict = {}
     for loc in all_locations:
-        locations_by_user[loc.telegram_id] = locations_by_user.get(loc.telegram_id, [])
-        locations_by_user[loc.telegram_id].append(loc)
+        locations_by_user.setdefault(loc.telegram_id, []).append(loc)
+
+    # загружаем данные всех пользователей одним запросом
+    all_users = await get_all_users()
+    users_by_id = {u.telegram_id: u for u in all_users}
 
     text = "Альтернативные локации:\n"
     user_counter = 0
-    for user_id in locations_by_user:
-        user = await get_user_by_telegram_id(user_id)
+    for user_id, locs in locations_by_user.items():
         user_counter += 1
+        user = users_by_id.get(user_id)
         if user:
             text += f"{user_counter}. {user.surname} ({user_id}):\n"
         else:
             text += f"{user_counter}. [удалённый пользователь] ({user_id}):\n"
-        loc_counter = 0
-        for loc in locations_by_user.get(user_id):
-            loc_counter += 1
+        for loc_counter, loc in enumerate(locs, start=1):
             text += (
                 f"\t\t\t{loc_counter}) "
                 f"ID: {loc.id} | "
@@ -340,13 +343,23 @@ async def delete_alt_location_cmd(message: Message):
         return
 
     location_id = int(args[1])
-    await delete_alternative_location(location_id)
+    deleted = await delete_alternative_location(location_id)
 
     admin = await get_user_by_telegram_id(message.from_user.id)
+
+    if not deleted:
+        logging.warning(
+            f"Админ {admin.surname} ({admin.telegram_id}) попытался удалить "
+            f"несуществующую альтернативную локацию {location_id}."
+        )
+        await message.answer(
+            f"❌ Альтернативная локация с ID {location_id} не найдена."
+        )
+        return
+
     logging.info(
         f"Админ {admin.surname} ({admin.telegram_id}) удалил альтернативную локацию {location_id}."
     )
-
     await message.answer(f"🗑️ Альтернативная локация {location_id} удалена.")
 
 
@@ -388,16 +401,19 @@ async def list_admins(message: Message):
     admin = await get_user_by_telegram_id(message.from_user.id)
     admins = await get_all_admins()
 
+    # загружаем всех пользователей, чтобы не делать запрос в цикле
+    all_users = await get_all_users()
+    users_by_id = {u.telegram_id: u for u in all_users}
+
     text = "Администраторы:\n"
     counter = 0
     for a in admins:
         counter += 1
-
-        user_admin = await get_user_by_telegram_id(a.telegram_id)
+        user_admin = users_by_id.get(a.telegram_id)
         if not user_admin:
             text += (
                 f"{counter}. "
-                f"Незарегестрированный админ. "
+                f"Незарегистрированный админ. "
                 f"Telegram ID: {a.telegram_id}\n"
             )
         else:
@@ -484,48 +500,6 @@ async def delete_admin_cmd(message: Message):
     await message.answer(
         f"✅ Пользователь {deleted_admin_id} удалён из администраторов."
     )
-
-
-# deleted feature
-# @router.message(Command("start_quest"))
-# async def start_questionnaire(message: Message):
-#     """
-#     Отправляет сообщение с опросом
-#     """
-
-#     await send_questionnaire(message.bot)
-#     admin = await get_user_by_telegram_id(message.from_user.id)
-#     logging.info(
-#         f"Админ {admin.surname} ({admin.telegram_id}) запустил опрос по питанию."
-#     )
-
-
-# @router.message(Command("quest"))
-# async def questionnaire(message: Message):
-#     """
-#     Отправляет результаты опроса
-#     """
-
-#     report = await generate_report_quest()
-#     admin = await get_user_by_telegram_id(message.from_user.id)
-#     logging.info(
-#         f"Админ {admin.surname} ({admin.telegram_id}) запросил отчёт по опросу."
-#     )
-#     await message.answer(report)
-
-
-# @router.message(Command("clear_quest"))
-# async def clear_quest(message: Message):
-#     """
-#     Очищает результаты опроса
-#     """
-
-#     await clear_questionnaire()
-#     admin = await get_user_by_telegram_id(message.from_user.id)
-#     logging.info(
-#         f"Админ {admin.surname} ({admin.telegram_id}) очистил таблицу Questionnaire."
-#     )
-#     await message.answer("Таблица Questionnaire успешно очищена.")
 
 
 def register_admin_handlers(dp, admin_middleware):

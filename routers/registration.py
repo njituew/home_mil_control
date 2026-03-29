@@ -42,29 +42,21 @@ async def process_surname(message: Message, state: FSMContext):
 
 @router.message(RegisterStates.waiting_for_location, F.location)
 async def process_location(message: Message, state: FSMContext):
-    await state.update_data(
-        latitude=message.location.latitude, longitude=message.location.longitude
-    )
-    await save_user(message, state)
-
-
-async def save_user(message: Message, state: FSMContext):
     user_data = await state.get_data()
     await add_user(
         message.from_user.id,
         user_data["surname"],
-        user_data["latitude"],
-        user_data["longitude"],
+        message.location.latitude,
+        message.location.longitude,
     )
     await message.answer("Регистрация завершена.")
     logging.info(
         f"Зарегистрирован новый пользователь: "
         f"{message.from_user.id}, "
         f"{user_data['surname']}, "
-        f"{user_data['latitude']}, "
-        f"{user_data['longitude']}"
+        f"{message.location.latitude}, "
+        f"{message.location.longitude}"
     )
-
     await state.clear()
 
 

@@ -3,8 +3,10 @@ import os
 import logging
 
 
+load_dotenv()
+
+
 def get_bot_token() -> str:
-    load_dotenv()
     bot_token = os.getenv("BOT_TOKEN")
     if not bot_token:
         raise ValueError("BOT_TOKEN is not set in the environment variables.")
@@ -12,7 +14,6 @@ def get_bot_token() -> str:
 
 
 def get_database_dsn() -> str:
-    load_dotenv()
     database_dsn = os.getenv("DATABASE_DSN")
     if not database_dsn:
         raise ValueError("DATABASE_DSN is not set in the environment variables.")
@@ -20,9 +21,7 @@ def get_database_dsn() -> str:
 
 
 def get_logs_path() -> str:
-    load_dotenv()
-    logs_path = os.getenv("LOGS_PATH")
-    return logs_path
+    return os.getenv("LOGS_PATH")
 
 
 def init_logging():
@@ -35,7 +34,6 @@ def init_logging():
             logging.FileHandler(file_path, encoding="utf-8", mode="a"),
         ],
     )
-    return logging
 
 
 def is_test_mode() -> bool:

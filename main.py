@@ -1,9 +1,10 @@
 import asyncio
+import logging
 from src.bot import create_bot
 
 
 async def main():
-    bot, dp, scheduler, logging = await create_bot()
+    bot, dp, scheduler = await create_bot()
 
     try:
         logging.info("Бот запускается...")

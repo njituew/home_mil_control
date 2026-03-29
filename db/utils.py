@@ -1,5 +1,5 @@
 from sqlalchemy import select, delete
-from db.models import User, Admin, TodayControl, AlternativeLocation, Questionnaire
+from db.models import User, Admin, TodayControl, AlternativeLocation
 from db.database import AsyncSessionLocal
 import logging
 
@@ -47,13 +47,8 @@ async def get_all_users():
 
 async def delete_user_by_telegram_id(telegram_id: int):
     async with AsyncSessionLocal() as session:
-        result = await session.execute(
-            select(User).where(User.telegram_id == telegram_id)
-        )
-        user = result.scalar_one_or_none()
-        if user:
-            await session.delete(user)
-            await session.commit()
+        await session.execute(delete(User).where(User.telegram_id == telegram_id))
+        await session.commit()
 
 
 # Admins
@@ -87,13 +82,8 @@ async def get_all_admins():
 
 async def delete_admin_by_telegram_id(telegram_id: int):
     async with AsyncSessionLocal() as session:
-        result = await session.execute(
-            select(Admin).where(Admin.telegram_id == telegram_id)
-        )
-        admin = result.scalar_one_or_none()
-        if admin:
-            await session.delete(admin)
-            await session.commit()
+        await session.execute(delete(Admin).where(Admin.telegram_id == telegram_id))
+        await session.commit()
 
 
 # TodayControl
@@ -160,9 +150,10 @@ async def get_alternative_locations(telegram_id: int):
         return result.scalars().all()
 
 
-async def delete_alternative_location(location_id: int):
+async def delete_alternative_location(location_id: int) -> bool:
     """
     Удаляет альтернативную локацию по её ID.
+    Возвращает True если локация была найдена и удалена, False если не найдена.
     """
     async with AsyncSessionLocal() as session:
         result = await session.execute(
@@ -172,6 +163,8 @@ async def delete_alternative_location(location_id: int):
         if location:
             await session.delete(location)
             await session.commit()
+            return True
+        return False
 
 
 async def get_all_alternative_locations():
@@ -181,38 +174,3 @@ async def get_all_alternative_locations():
     async with AsyncSessionLocal() as session:
         result = await session.execute(select(AlternativeLocation))
         return result.scalars().all()
-
-
-# Questionnaire (deleted feature)
-# async def add_user_questionnaire(
-#     telegram_id: int, surname: str, will_feed: bool = False
-# ):
-#     async with AsyncSessionLocal() as session:
-#         user = Questionnaire(
-#             telegram_id=telegram_id,
-#             surname=surname,
-#             will_feed=will_feed,
-#         )
-#         session.add(user)
-#         await session.commit()
-
-
-# async def get_all_questionnaire():
-#     async with AsyncSessionLocal() as session:
-#         result = await session.execute(select(Questionnaire))
-#         return result.scalars().all()
-
-
-# async def get_questionnaire_by_id(telegram_id: int):
-#     async with AsyncSessionLocal() as session:
-#         result = await session.execute(
-#             select(Questionnaire).where(Questionnaire.telegram_id == telegram_id)
-#         )
-#         return result.scalar_one_or_none()
-
-
-# async def clear_questionnaire():
-#     async with AsyncSessionLocal() as session:
-#         await session.execute(delete(Questionnaire))
-#         await session.commit()
-#         logging.info("All data cleared from Questionnaire table.")

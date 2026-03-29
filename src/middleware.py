@@ -16,16 +16,14 @@ class RegistrationCheckMiddleware(BaseMiddleware):
                 return await handler(event, data)
             if await is_admin(event.from_user.id):
                 return await handler(event, data)
+
+            await state.set_state(RegisterStates.waiting_for_surname)
+            text = "Пройдите процесс регистрации перед отправкой сообщения.\nВведите вашу фамилию."
+
             if isinstance(event, Message):
-                await event.answer(
-                    "Пройдите процесс регистрации перед отправкой сообщения.\nВведите вашу фамилию."
-                )
-                await state.set_state(RegisterStates.waiting_for_surname)
+                await event.answer(text)
             elif isinstance(event, CallbackQuery):
-                await event.message.answer(
-                    "Пройдите процесс регистрации перед отправкой сообщения.\nВведите вашу фамилию."
-                )
-                await state.set_state(RegisterStates.waiting_for_surname)
+                await event.message.answer(text)
                 await event.answer()
             return
         return await handler(event, data)

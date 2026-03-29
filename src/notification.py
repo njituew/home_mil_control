@@ -48,20 +48,4 @@ async def send_daily_report(bot: Bot):
         try:
             await bot.send_message(admin_id, report)
         except Exception as e:
-            print(f"Ошибка отправки админу {admin_id}: {e}")
-
-
-# async def send_questionnaire(bot: Bot):
-#     keyboard = InlineKeyboardMarkup(
-#         inline_keyboard=[
-#             (InlineKeyboardButton(text="✅", callback_data="questionnaire_answer_1"),),
-#             (InlineKeyboardButton(text="❌", callback_data="questionnaire_answer_2"),),
-#         ]
-#     )
-#     text = f"text\n"
-#     users = await get_all_users()
-#     for user in users:
-#         try:
-#             await bot.send_message(user.telegram_id, text, reply_markup=keyboard)
-#         except Exception as e:
-#             logging.error(f"Ошибка отправки пользователю {user.telegram_id}: {e}")
+            logging.error(f"Ошибка отправки админу {admin_id}: {e}")

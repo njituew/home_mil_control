@@ -32,10 +32,6 @@ async def set_commands(bot: Bot):
         BotCommand(command="delete_admin", description="Удалить администратора по Telegram ID"),
         BotCommand(command="ping", description="Понг"),
         BotCommand(command="info", description="Откуда ноги растут"),
-        # Deleted feature
-        # BotCommand(command="start_quest", description="Запустить опрос"),
-        # BotCommand(command="quest", description="Посмотреть результаты опроса"),
-        # BotCommand(command="clear_quest", description="Очистить результаты опроса"),
     ]
     try:
         admins = await get_admin_ids()

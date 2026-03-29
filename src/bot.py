@@ -13,8 +13,8 @@ from src.utils import set_commands
 
 
 async def create_bot():
+    init_logging()
     bot = Bot(get_bot_token())
-    logging = init_logging()
     await init_db()
 
     dp = Dispatcher(storage=MemoryStorage())
@@ -30,4 +30,4 @@ async def create_bot():
 
     await set_commands(bot)
 
-    return bot, dp, scheduler, logging
+    return bot, dp, scheduler
