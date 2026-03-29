@@ -53,7 +53,7 @@ async def validate_location(user: User, message: Message) -> None:
 
         # проверка времени
         now = datetime.now().time()
-        if not (time(20, 40) <= now <= time(21, 10)):
+        if not (time(21, 40) <= now <= time(22, 10)):
             logging.warning(
                 f"Пользователь {user.surname} ({user.telegram_id}) попытался отправить геопозицию вне времени."
             )
