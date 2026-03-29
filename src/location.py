@@ -2,7 +2,7 @@ from math import sin, cos, asin, sqrt, radians
 from db.models import User
 from db.utils import get_today_control_by_id
 from datetime import datetime, time
-import pytz
+
 import logging
 from src.config import is_test_mode
 from src.exceptions import (
@@ -52,9 +52,8 @@ async def validate_location(user: User, message: Message) -> None:
             raise NotLiveLocation
 
         # проверка времени
-        moscow_tz = pytz.timezone("Europe/Moscow")
-        now = datetime.now(moscow_tz).time()
-        if not (time(21, 40) <= now <= time(22, 10)):
+        now = datetime.now().time()
+        if not (time(20, 40) <= now <= time(21, 10)):
             logging.warning(
                 f"Пользователь {user.surname} ({user.telegram_id}) попытался отправить геопозицию вне времени."
             )
