@@ -1,7 +1,6 @@
 from db.utils import (
     get_all_users,
     get_all_controls,
-    get_alternative_locations,
     get_all_alternative_locations,
 )
 from src.location import haversine
