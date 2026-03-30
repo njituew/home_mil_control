@@ -1,14 +1,15 @@
-from aiogram import Router, F
-from aiogram.types import Message
-from aiogram.fsm.context import FSMContext
-from aiogram.fsm.state import State, StatesGroup
-from aiogram.filters import Command
-from db.utils import (
-    is_user_registered,
-    add_user,
-)
 import logging
 
+from aiogram import F, Router
+from aiogram.filters import Command
+from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import State, StatesGroup
+from aiogram.types import Message
+
+from db.utils import (
+    add_user,
+    is_user_registered,
+)
 
 router = Router()
 

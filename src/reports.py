@@ -1,7 +1,7 @@
 from db.utils import (
-    get_all_users,
-    get_all_controls,
     get_all_alternative_locations,
+    get_all_controls,
+    get_all_users,
 )
 from src.location import haversine
 
@@ -51,7 +51,7 @@ async def generate_report() -> str:
         if found_alt:
             not_at_home.append(f"{user.surname} ({found_alt.comment})")
         else:
-            not_at_home.append(f"{user.surname} ({dist/1000:.2f} км от дома)")
+            not_at_home.append(f"{user.surname} ({dist / 1000:.2f} км от дома)")
 
     text = "Отчёт:\n"
     text += "\nНе дома:\n"

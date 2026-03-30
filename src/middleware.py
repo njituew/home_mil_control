@@ -1,10 +1,11 @@
 import logging
 
 from aiogram import BaseMiddleware
-from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.context import FSMContext
+from aiogram.types import CallbackQuery, Message
+
+from db.utils import get_user_by_telegram_id, is_admin, is_user_registered
 from routers.registration import RegisterStates
-from db.utils import is_user_registered, is_admin, get_user_by_telegram_id
 
 
 class RegistrationCheckMiddleware(BaseMiddleware):

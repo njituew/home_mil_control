@@ -1,11 +1,12 @@
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.cron import CronTrigger
+
+from db.utils import clear_today_control
 from src.notification import (
-    send_reminder,
     send_daily_report,
     send_last_chance,
+    send_reminder,
 )
-from db.utils import clear_today_control
 
 
 def init_scheduler(bot):

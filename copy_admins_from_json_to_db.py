@@ -1,8 +1,14 @@
-from db.database import init_db
-from db.utils import add_admin, get_admin_ids, delete_admin_by_telegram_id, get_all_admins
-import json
-import asyncio
 import argparse
+import asyncio
+import json
+
+from db.database import init_db
+from db.utils import (
+    add_admin,
+    delete_admin_by_telegram_id,
+    get_admin_ids,
+    get_all_admins,
+)
 
 
 async def copy_admins_from_json_to_db(json_file_path: str, overwrite: bool = False):
@@ -61,4 +67,6 @@ if __name__ == "__main__":
     if args.delete:
         asyncio.run(delete_all_admins())
     else:
-        asyncio.run(copy_admins_from_json_to_db("admins.json", overwrite=args.overwrite))
+        asyncio.run(
+            copy_admins_from_json_to_db("admins.json", overwrite=args.overwrite)
+        )

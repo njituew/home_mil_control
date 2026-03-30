@@ -1,20 +1,21 @@
-from aiogram import Router, F
-from aiogram.types import Message
-from aiogram.fsm.context import FSMContext
-from aiogram.filters import Command
-from db.utils import (
-    get_user_by_telegram_id,
-    add_today_control,
-)
-from src.location import haversine, validate_location
-from src.exceptions import (
-    ForwardedMessage,
-    NotLiveLocation,
-    LocationTimeOut,
-    LocationAlreadyExists,
-)
 import logging
 
+from aiogram import F, Router
+from aiogram.filters import Command
+from aiogram.fsm.context import FSMContext
+from aiogram.types import Message
+
+from db.utils import (
+    add_today_control,
+    get_user_by_telegram_id,
+)
+from src.exceptions import (
+    ForwardedMessage,
+    LocationAlreadyExists,
+    LocationTimeOut,
+    NotLiveLocation,
+)
+from src.location import haversine, validate_location
 
 router = Router()
 

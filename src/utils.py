@@ -1,6 +1,7 @@
+import logging
+
 from aiogram import Bot
 from aiogram.types import BotCommand, BotCommandScopeChat
-import logging
 
 from db.utils import get_admin_ids
 
@@ -17,19 +18,43 @@ async def set_commands(bot: Bot):
 
     admin_commands = [
         BotCommand(command="users", description="Список пользователей"),
-        BotCommand(command="user", description="Информация о пользователе по фамилии или Telegram ID"),
+        BotCommand(
+            command="user",
+            description="Информация о пользователе по фамилии или Telegram ID",
+        ),
         BotCommand(command="delete", description="Удалить пользователя по Telegram ID"),
-        BotCommand(command="control", description="Посмотреть текущие отметки геолокации"),
-        BotCommand(command="clear", description="Очистить отметки геолокации за сегодня"),
-        BotCommand(command="where_is", description="Посмотреть последнюю локацию пользователя по Telegram ID"),
-        BotCommand(command="add_alt", description="Добавить альтернативную локацию: <telegram_id> <latitude> <longitude> [комментарий]"),
-        BotCommand(command="user_alt", description="Альтернативные локации пользователя по Telegram ID"),
+        BotCommand(
+            command="control", description="Посмотреть текущие отметки геолокации"
+        ),
+        BotCommand(
+            command="clear", description="Очистить отметки геолокации за сегодня"
+        ),
+        BotCommand(
+            command="where_is",
+            description="Посмотреть последнюю локацию пользователя по Telegram ID",
+        ),
+        BotCommand(
+            command="add_alt",
+            description="Добавить альтернативную локацию: <telegram_id> <latitude> <longitude> [комментарий]",
+        ),
+        BotCommand(
+            command="user_alt",
+            description="Альтернативные локации пользователя по Telegram ID",
+        ),
         BotCommand(command="all_alt", description="Все альтернативные локации"),
-        BotCommand(command="del_alt", description="Удалить альтернативную локацию по ID"),
-        BotCommand(command="ping_all", description="Отправить сообщение всем пользователям"),
+        BotCommand(
+            command="del_alt", description="Удалить альтернативную локацию по ID"
+        ),
+        BotCommand(
+            command="ping_all", description="Отправить сообщение всем пользователям"
+        ),
         BotCommand(command="admins", description="Список администраторов"),
-        BotCommand(command="add_admin", description="Добавить администратора по Telegram ID"),
-        BotCommand(command="delete_admin", description="Удалить администратора по Telegram ID"),
+        BotCommand(
+            command="add_admin", description="Добавить администратора по Telegram ID"
+        ),
+        BotCommand(
+            command="delete_admin", description="Удалить администратора по Telegram ID"
+        ),
         BotCommand(command="ping", description="Понг"),
         BotCommand(command="info", description="Откуда ноги растут"),
     ]

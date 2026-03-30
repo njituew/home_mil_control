@@ -1,17 +1,18 @@
-from math import sin, cos, asin, sqrt, radians
+import logging
+from datetime import datetime, time
+from math import asin, cos, radians, sin, sqrt
+
+from aiogram.types import Message
+
 from db.models import User
 from db.utils import get_today_control_by_id
-from datetime import datetime, time
-
-import logging
 from src.config import is_test_mode
 from src.exceptions import (
     ForwardedMessage,
-    NotLiveLocation,
-    LocationTimeOut,
     LocationAlreadyExists,
+    LocationTimeOut,
+    NotLiveLocation,
 )
-from aiogram.types import Message
 
 
 def haversine(lat1: float, lon1: float, lat2: float, lon2: float) -> float:

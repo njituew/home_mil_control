@@ -1,7 +1,9 @@
-from sqlalchemy import select, delete
-from db.models import User, Admin, TodayControl, AlternativeLocation
-from db.database import AsyncSessionLocal
 import logging
+
+from sqlalchemy import delete, select
+
+from db.database import AsyncSessionLocal
+from db.models import Admin, AlternativeLocation, TodayControl, User
 
 
 # Users

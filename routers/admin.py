@@ -1,27 +1,26 @@
-from aiogram import Router
-from aiogram.types import Message
-from aiogram.filters import Command
-
-from db.utils import (
-    get_all_users,
-    get_user_by_telegram_id,
-    get_users_by_surname,
-    delete_user_by_telegram_id,
-    is_admin,
-    get_all_admins,
-    add_admin,
-    delete_admin_by_telegram_id,
-    get_today_control_by_id,
-    clear_today_control,
-    add_alternative_location,
-    delete_alternative_location,
-    get_alternative_locations,
-    get_all_alternative_locations,
-)
-from src.reports import generate_report
-
 import logging
 
+from aiogram import Router
+from aiogram.filters import Command
+from aiogram.types import Message
+
+from db.utils import (
+    add_admin,
+    add_alternative_location,
+    clear_today_control,
+    delete_admin_by_telegram_id,
+    delete_alternative_location,
+    delete_user_by_telegram_id,
+    get_all_admins,
+    get_all_alternative_locations,
+    get_all_users,
+    get_alternative_locations,
+    get_today_control_by_id,
+    get_user_by_telegram_id,
+    get_users_by_surname,
+    is_admin,
+)
+from src.reports import generate_report
 
 router = Router()
 
@@ -412,9 +411,7 @@ async def list_admins(message: Message):
         user_admin = users_by_id.get(a.telegram_id)
         if not user_admin:
             text += (
-                f"{counter}. "
-                f"Незарегистрированный админ. "
-                f"Telegram ID: {a.telegram_id}\n"
+                f"{counter}. Незарегистрированный админ. Telegram ID: {a.telegram_id}\n"
             )
         else:
             text += (
