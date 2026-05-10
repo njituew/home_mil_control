@@ -26,6 +26,7 @@ def get_logs_path() -> str:
 
 def init_logging():
     file_path = get_logs_path()
+    os.makedirs(os.path.dirname(file_path), exist_ok=True)
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s [%(levelname)s] %(message)s",
