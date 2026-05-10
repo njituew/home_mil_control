@@ -1,31 +1,41 @@
+"""CLI utility for seeding the admins table from a JSON file."""
+
 import argparse
 import asyncio
 import json
+import sys
 
 from db.database import init_db
-from db.utils import (
-    add_admin,
-    delete_admin_by_telegram_id,
-    get_admin_ids,
-    get_all_admins,
-)
+from db.utils import add_admin, clear_admins, get_admin_ids
 
 
-async def copy_admins_from_json_to_db(json_file_path: str, overwrite: bool = False):
+async def copy_admins_from_json_to_db(json_file_path: str, overwrite: bool = False) -> None:
+    """Seed the admins table from a JSON file.
+
+    Args:
+        json_file_path: Path to a JSON file with an "admins" list of {"chat_id": int} objects.
+        overwrite: When True, wipe the existing table before inserting.
+    """
     await init_db()
 
-    with open(json_file_path, "r") as file:
-        admins_data = json.load(file)
+    try:
+        with open(json_file_path, "r") as file:
+            admins_data = json.load(file)
+    except FileNotFoundError:
+        print(f"Ошибка: файл '{json_file_path}' не найден.")
+        sys.exit(1)
+    except json.JSONDecodeError as e:
+        print(f"Ошибка: невалидный JSON в '{json_file_path}': {e}")
+        sys.exit(1)
 
-    json_ids = [admin["chat_id"] for admin in admins_data["admins"]]
+    json_ids: list[int] = [admin["chat_id"] for admin in admins_data["admins"]]
 
     if overwrite:
-        existing_admins = await get_all_admins()
-        for admin in existing_admins:
-            await delete_admin_by_telegram_id(admin.telegram_id)
-        print(f"Удалено {len(existing_admins)} администраторов.")
-
-    existing_ids = set(await get_admin_ids())
+        deleted = await clear_admins()
+        print(f"Удалено {deleted} администраторов.")
+        existing_ids: set[int] = set()
+    else:
+        existing_ids = set(await get_admin_ids())
 
     added, skipped = 0, 0
     for telegram_id in json_ids:
@@ -40,14 +50,11 @@ async def copy_admins_from_json_to_db(json_file_path: str, overwrite: bool = Fal
     print(f"\nГотово. Добавлено: {added}, пропущено: {skipped}.")
 
 
-async def delete_all_admins():
+async def delete_all_admins() -> None:
+    """Remove every admin from the database."""
     await init_db()
-
-    existing_admins = await get_all_admins()
-    for admin in existing_admins:
-        await delete_admin_by_telegram_id(admin.telegram_id)
-
-    print(f"Удалено {len(existing_admins)} администраторов.")
+    deleted = await clear_admins()
+    print(f"Удалено {deleted} администраторов.")
 
 
 if __name__ == "__main__":

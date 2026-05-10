@@ -88,6 +88,14 @@ async def delete_admin_by_telegram_id(telegram_id: int):
         await session.commit()
 
 
+async def clear_admins() -> int:
+    """Delete all admins in a single query and return the number of deleted rows."""
+    async with AsyncSessionLocal() as session:
+        result = await session.execute(delete(Admin))
+        await session.commit()
+        return result.rowcount
+
+
 # TodayControl
 async def add_today_control(telegram_id: int, latitude: float, longitude: float):
     async with AsyncSessionLocal() as session:
