@@ -16,6 +16,7 @@ def init_scheduler(bot):
         CronTrigger(hour=21, minute=30),
         id="clear_today_control",
         replace_existing=True,
+        misfire_grace_time=600,
     )
     scheduler.add_job(
         send_reminder,
