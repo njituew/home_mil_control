@@ -9,7 +9,9 @@ from db.database import init_db
 from db.utils import add_admin, clear_admins, get_admin_ids
 
 
-async def copy_admins_from_json_to_db(json_file_path: str, overwrite: bool = False) -> None:
+async def copy_admins_from_json_to_db(
+    json_file_path: str, overwrite: bool = False
+) -> None:
     """Seed the admins table from a JSON file.
 
     Args:
