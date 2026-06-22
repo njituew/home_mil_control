@@ -1,8 +1,11 @@
+import asyncio
+
 from db.utils import (
     get_all_alternative_locations,
     get_all_controls,
     get_all_users,
 )
+from src.address import get_address_by_coordinates
 from src.location import haversine
 
 
@@ -51,7 +54,21 @@ async def generate_report() -> str:
         if found_alt:
             not_at_home.append(f"{user.surname} ({found_alt.comment})")
         else:
-            not_at_home.append(f"{user.surname} ({dist / 1000:.2f} км от дома)")
+            not_at_home.append((user.surname, dist, control.latitude, control.longitude))
+
+    # resolve addresses for users not at home and not at an alternative location
+    resolved_not_at_home = []
+    unknown_entries = [e for e in not_at_home if isinstance(e, tuple)]
+    for i, (surname, dist, lat, lon) in enumerate(unknown_entries):
+        if i > 0:
+            await asyncio.sleep(0.5)
+        address = await get_address_by_coordinates(lat, lon)
+        resolved_not_at_home.append((surname, dist, address))
+
+    not_at_home = [
+        e if isinstance(e, str) else f"{e[0]} ({e[1] / 1000:.2f} км от дома, {resolved_not_at_home.pop(0)[2]})"
+        for e in not_at_home
+    ]
 
     text = "Отчёт:\n"
     text += "\nНе дома:\n"
