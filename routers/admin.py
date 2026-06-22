@@ -20,6 +20,7 @@ from db.utils import (
     get_users_by_surname,
     is_admin,
 )
+from src.address import get_address_by_coordinates
 from src.reports import generate_report
 
 router = Router()
@@ -38,9 +39,7 @@ async def list_users(message: Message):
         return
 
     text = "Зарегистрированные пользователи:\n"
-    counter = 0
-    for user in users:
-        counter += 1
+    for counter, user in enumerate(users, start=1):
         text += (
             f"{counter}. "
             f"Фамилия: {user.surname}, "
@@ -86,14 +85,15 @@ async def user_info(message: Message):
             return
 
     text = ""
-    counter = 0
-    for user in users:
-        counter += 1
+    for counter, user in enumerate(users, start=1):
+        address = await get_address_by_coordinates(
+            user.home_latitude, user.home_longitude
+        )
         text += (
             f"{counter}. "
             f"Фамилия: {user.surname}, "
             f"Telegram ID: {user.telegram_id}, "
-            f"Домашний адрес: {user.home_latitude}, {user.home_longitude}\n"
+            f"Домашний адрес: {address} ({user.home_latitude}, {user.home_longitude})\n"
         )
 
     logging.info(
@@ -200,8 +200,10 @@ async def where_is_user(message: Message):
         f"пользователя {user.surname} ({user.telegram_id})."
     )
 
+    address = await get_address_by_coordinates(control.latitude, control.longitude)
+
     await message.answer(
-        f"Пользователь {user.surname} отправил локацию\n{control.latitude}, {control.longitude}"
+        f"Пользователь {user.surname} отправил локацию\n{address} ({control.latitude}, {control.longitude})"
     )
 
 
@@ -269,9 +271,10 @@ async def list_alt_locations(message: Message):
 
     text = "Альтернативные локации:\n"
     for loc in locations:
+        address = await get_address_by_coordinates(loc.latitude, loc.longitude)
         text += (
             f"ID: {loc.id} | "
-            f"Lat: {loc.latitude}, Lon: {loc.longitude} "
+            f"{address} ({loc.latitude}, {loc.longitude}) "
             f"| Комментарий: {loc.comment or '-'}\n"
         )
 
@@ -323,7 +326,7 @@ async def list_all_alt_locations(message: Message):
             text += (
                 f"\t\t\t{loc_counter}) "
                 f"ID: {loc.id} | "
-                f"Lat: {loc.latitude}, Lon: {loc.longitude} | "
+                f"{loc.latitude}, {loc.longitude} | "
                 f"{loc.comment or '-'}\n"
             )
 

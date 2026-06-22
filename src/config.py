@@ -39,3 +39,7 @@ def init_logging():
 
 def is_test_mode() -> bool:
     return os.getenv("TEST_MODE", "false").lower() == "true"
+
+
+def get_email_for_API() -> str:
+    return os.getenv("MY_EMAIL", "test@gmail.com")
