@@ -16,14 +16,21 @@ from db.utils import (
     get_all_users,
     get_alternative_locations,
     get_today_control_by_id,
+    get_user_by_surname,
     get_user_by_telegram_id,
-    get_users_by_surname,
     is_admin,
 )
 from src.address import get_address_by_coordinates
 from src.reports import generate_report
 
 router = Router()
+
+
+async def resolve_user(identifier: str):
+    """Resolve a user by Telegram ID (digits) or surname."""
+    if identifier.isdigit():
+        return await get_user_by_telegram_id(int(identifier))
+    return await get_user_by_surname(identifier)
 
 
 @router.message(Command("users"))
@@ -68,33 +75,21 @@ async def user_info(message: Message):
         return
 
     admin = await get_user_by_telegram_id(message.from_user.id)
-
-    if args[1].isdigit():
-        users = [await get_user_by_telegram_id(int(args[1]))]
-        if not users[0]:
-            await message.answer(
-                "Нет зарегистрированных пользователей с таким TelegramID."
-            )
-            return
-    else:
-        users = await get_users_by_surname(args[1])
-        if not users:
-            await message.answer(
-                "Нет зарегистрированных пользователей с такой фамилией."
-            )
-            return
-
-    text = ""
-    for counter, user in enumerate(users, start=1):
-        address = await get_address_by_coordinates(
-            user.home_latitude, user.home_longitude
+    user = await resolve_user(args[1])
+    if not user:
+        logging.warning(
+            f"Админ {admin.surname} ({admin.telegram_id}) "
+            f"запросил информацию о несуществующем пользователе {args[1]}."
         )
-        text += (
-            f"{counter}. "
-            f"Фамилия: {user.surname}, "
-            f"Telegram ID: {user.telegram_id}, "
-            f"Домашний адрес: {address} ({user.home_latitude}, {user.home_longitude})\n"
-        )
+        await message.answer(f"❌ Пользователь '{args[1]}' не найден в базе.")
+        return
+
+    address = await get_address_by_coordinates(user.home_latitude, user.home_longitude)
+    text = (
+        f"Фамилия: {user.surname}, "
+        f"Telegram ID: {user.telegram_id}, "
+        f"Домашний адрес: {address} ({user.home_latitude}, {user.home_longitude})"
+    )
 
     logging.info(
         f"Админ {admin.surname} ({admin.telegram_id}) запросил информацию по пользователю {args[1]}."
@@ -110,12 +105,12 @@ async def delete_user(message: Message):
     """
 
     args = message.text.split()
-    if len(args) != 2 or not args[1].isdigit():
-        await message.answer("Используйте команду в формате: /delete <telegram_id>")
+    if len(args) != 2:
+        await message.answer("Используйте команду в формате: /delete <telegram_id>\nили /delete <фамилия>")
         return
 
     admin = await get_user_by_telegram_id(message.from_user.id)
-    deleted_user = await get_user_by_telegram_id(int(args[1]))
+    deleted_user = await resolve_user(args[1])
 
     if not deleted_user:
         logging.warning(
@@ -170,22 +165,21 @@ async def show_control_report(message: Message):
 @router.message(Command("where_is"))
 async def where_is_user(message: Message):
     args = message.text.split()
-    if len(args) != 2 or not args[1].isdigit():
-        await message.answer("Используйте формат: /where_is <telegram_id>")
+    if len(args) != 2:
+        await message.answer(
+            "Используйте формат: /where_is <telegram_id> или /where_is <фамилия>"
+        )
         return
 
-    telegram_id = int(args[1])
     admin = await get_user_by_telegram_id(message.from_user.id)
-    user = await get_user_by_telegram_id(telegram_id)
+    user = await resolve_user(args[1])
 
     if not user:
         logging.warning(
             f"Админ {admin.surname} ({admin.telegram_id}) "
-            f"запросил локацию несуществующего пользователя {telegram_id}."
+            f"запросил локацию несуществующего пользователя {args[1]}."
         )
-        await message.answer(
-            f"❌ Пользователь с Telegram ID {telegram_id} не найден в базе."
-        )
+        await message.answer(f"❌ Пользователь '{args[1]}' не найден в базе.")
         return
 
     control = await get_today_control_by_id(user.telegram_id)
@@ -201,7 +195,6 @@ async def where_is_user(message: Message):
     )
 
     address = await get_address_by_coordinates(control.latitude, control.longitude)
-
     await message.answer(
         f"Пользователь {user.surname} отправил локацию\n{address} ({control.latitude}, {control.longitude})"
     )
@@ -216,12 +209,11 @@ async def add_alt_location(message: Message):
     args = message.text.split(maxsplit=4)
     if len(args) < 4:
         await message.answer(
-            "Используй формат:\n/add_alt <telegram_id> <latitude> <longitude> [комментарий]"
+            "Используй формат:\n/add_alt <telegram_id|фамилия> <latitude> <longitude> [комментарий]"
         )
         return
 
     try:
-        telegram_id = int(args[1])
         latitude = float(args[2])
         longitude = float(args[3])
         comment = " ".join(args[4:])
@@ -230,18 +222,16 @@ async def add_alt_location(message: Message):
         return
 
     admin = await get_user_by_telegram_id(message.from_user.id)
-    user = await get_user_by_telegram_id(telegram_id)
+    user = await resolve_user(args[1])
     if not user:
         logging.warning(
             f"Админ {admin.surname} ({admin.telegram_id}) "
-            f"попытался добавить локацию несуществующему пользователю {telegram_id}."
+            f"попытался добавить локацию несуществующему пользователю {args[1]}."
         )
-        await message.answer(
-            f"❌ Пользователь с Telegram ID {telegram_id} не найден в базе."
-        )
+        await message.answer(f"❌ Пользователь '{args[1]}' не найден в базе.")
         return
 
-    await add_alternative_location(telegram_id, latitude, longitude, comment)
+    await add_alternative_location(user.telegram_id, latitude, longitude, comment)
 
     logging.info(
         f"Админ {admin.surname} ({admin.telegram_id}) "
@@ -259,12 +249,19 @@ async def list_alt_locations(message: Message):
     """
 
     args = message.text.split()
-    if len(args) != 2 or not args[1].isdigit():
-        await message.answer("Используйте формат: /user_alt <telegram_id>")
+    if len(args) != 2:
+        await message.answer(
+            "Используйте формат: /user_alt <telegram_id> или /user_alt <фамилия>"
+        )
         return
 
-    telegram_id = int(args[1])
-    locations = await get_alternative_locations(telegram_id)
+    admin = await get_user_by_telegram_id(message.from_user.id)
+    user = await resolve_user(args[1])
+    if not user:
+        await message.answer(f"❌ Пользователь '{args[1]}' не найден в базе.")
+        return
+
+    locations = await get_alternative_locations(user.telegram_id)
     if not locations:
         await message.answer("У этого пользователя нет альтернативных локаций.")
         return
@@ -278,8 +275,6 @@ async def list_alt_locations(message: Message):
             f"| Комментарий: {loc.comment or '-'}\n"
         )
 
-    admin = await get_user_by_telegram_id(message.from_user.id)
-    user = await get_user_by_telegram_id(telegram_id)
     logging.info(
         f"Админ {admin.surname} ({admin.telegram_id}) "
         f"запросил альтернативные локации пользователя {user.surname} ({user.telegram_id})."

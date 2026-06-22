@@ -8,6 +8,7 @@ from aiogram.types import Message
 
 from db.utils import (
     add_user,
+    is_surname_taken,
     is_user_registered,
 )
 
@@ -34,7 +35,14 @@ async def cmd_start(message: Message, state: FSMContext):
 
 @router.message(RegisterStates.waiting_for_surname)
 async def process_surname(message: Message, state: FSMContext):
-    await state.update_data(surname=message.text)
+    surname = message.text.strip()
+    if await is_surname_taken(surname):
+        await message.answer(
+            f"Фамилия '{surname}' уже занята.\n"
+            "Добавьте первую букву имени с точкой, например: Иванов А."
+        )
+        return
+    await state.update_data(surname=surname)
     await message.answer(
         "Теперь отправьте вашу домашнюю геолокацию (гео-метку телеграма по кнопке 'Транслировать местоположение' или выберите точку на карте)."
     )

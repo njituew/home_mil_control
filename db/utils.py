@@ -15,11 +15,23 @@ async def is_user_registered(telegram_id: int) -> bool:
         return result.scalar_one_or_none() is not None
 
 
+async def is_surname_taken(surname: str) -> bool:
+    async with AsyncSessionLocal() as session:
+        result = await session.execute(select(User).where(User.surname == surname))
+        return result.scalar_one_or_none() is not None
+
+
 async def get_user_by_telegram_id(telegram_id: int):
     async with AsyncSessionLocal() as session:
         result = await session.execute(
             select(User).where(User.telegram_id == telegram_id)
         )
+        return result.scalar_one_or_none()
+
+
+async def get_user_by_surname(surname: str):
+    async with AsyncSessionLocal() as session:
+        result = await session.execute(select(User).where(User.surname == surname))
         return result.scalar_one_or_none()
 
 
