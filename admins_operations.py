@@ -1,4 +1,26 @@
-"""CLI utility for seeding the admins table from a JSON file."""
+"""Утилита командной строки для управления таблицей администраторов.
+
+Использование:
+    # Добавить одного администратора по Telegram ID:
+    python admins_operations.py <telegram_id>
+
+    # Загрузить администраторов из admins.json (дубликаты пропускаются):
+    python admins_operations.py
+
+    # Загрузить из admins.json, предварительно очистив таблицу:
+    python admins_operations.py --overwrite
+
+    Формат admins.json:
+        {
+            "admins": [
+                {"chat_id": 123456789},
+                {"chat_id": 987654321}
+            ]
+        }
+
+    # Удалить всех администраторов из таблицы:
+    python admins_operations.py --delete
+"""
 
 import argparse
 import asyncio
@@ -62,6 +84,13 @@ async def delete_all_admins() -> None:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Копирование админов из JSON в БД")
     parser.add_argument(
+        "admin_id",
+        nargs="?",
+        type=int,
+        default=None,
+        help="Telegram ID администратора для добавления",
+    )
+    parser.add_argument(
         "--overwrite",
         action="store_true",
         help="Удалить всех существующих админов и записать заново",
@@ -73,7 +102,18 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    if args.delete:
+    if args.admin_id is not None:
+
+        async def _add_single_admin(telegram_id: int) -> None:
+            await init_db()
+            if telegram_id in set(await get_admin_ids()):
+                print(f"Администратор {telegram_id} уже существует.")
+            else:
+                await add_admin(telegram_id)
+                print(f"Добавлен администратор: {telegram_id}.")
+
+        asyncio.run(_add_single_admin(args.admin_id))
+    elif args.delete:
         asyncio.run(delete_all_admins())
     else:
         asyncio.run(
